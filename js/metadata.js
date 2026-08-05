@@ -58,7 +58,7 @@ App.Meta = (function () {
 
   /* EPUB: Metadaten + Cover über epub.js (temporäre Instanz, danach destroy) */
   async function readEpub(file) {
-    const result = { title: null, author: null, language: null, cover: null };
+    const result = { title: null, author: null, language: null, cover: null, pageCount: null };
     let book = null;
     try {
       const buffer = await file.arrayBuffer();
@@ -87,11 +87,12 @@ App.Meta = (function () {
 
   /* PDF: Metadaten + Seite 1 als Cover */
   async function readPdf(file) {
-    const result = { title: null, author: null, language: null, cover: null };
+    const result = { title: null, author: null, language: null, cover: null, pageCount: null };
     let pdf = null;
     try {
       const buffer = await file.arrayBuffer();
       pdf = await pdfjsLib.getDocument({ data: buffer, isEvalSupported: false }).promise;
+      result.pageCount = pdf.numPages || null;
       try {
         const meta = await pdf.getMetadata();
         const info = meta.info || {};
@@ -132,7 +133,7 @@ App.Meta = (function () {
   async function read(file, format) {
     if (format === 'epub') return readEpub(file);
     if (format === 'pdf') return readPdf(file);
-    return finalize({ title: null, author: null, language: null, cover: null }, file);
+    return finalize({ title: null, author: null, language: null, cover: null, pageCount: null }, file);
   }
 
   return { detectFormat, parseFilename, read, readEpub, readPdf };

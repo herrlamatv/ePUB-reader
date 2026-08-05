@@ -145,6 +145,7 @@ App.Library = (function () {
       title: meta.title,
       author: meta.author || null,
       language: meta.language || null,
+      pageCount: meta.pageCount || null,
       size: size || 0,
       addedAt: Date.now(),
       lastOpenedAt: null,
@@ -312,8 +313,12 @@ App.Library = (function () {
       coverEl.style.background = App.Utils.coverGradient(rec.title);
     }
     const t = App.I18n.t;
+    const pages = rec.pageCount || rec.progress.totalPages || null;
+    const pagesText = !pages ? '–'
+      : rec.format === 'epub' ? t('details.pagesEstimate', { n: pages }) : String(pages);
     const rows = [
       [t('details.format'), rec.format.toUpperCase()],
+      [t('details.pages'), pagesText],
       [t('details.path'), rec.path || '–'],
       [t('details.size'), App.Utils.formatSize(rec.size)],
       [t('details.added'), App.Utils.formatDate(rec.addedAt)],

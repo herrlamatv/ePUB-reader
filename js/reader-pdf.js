@@ -33,6 +33,7 @@ App.PdfReader = (function () {
     pdf = await pdfjsLib.getDocument({ data: buffer, isEvalSupported: false }).promise;
     numPages = pdf.numPages;
     record.progress.totalPages = numPages;
+    record.pageCount = numPages;
 
     const page1 = await pdf.getPage(1);
     const vp = page1.getViewport({ scale: 1 });

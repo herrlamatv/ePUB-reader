@@ -153,6 +153,11 @@ App.EpubReader = (function () {
         App.DB.set('locations', record.id, book.locations.save());
       }
       locationsReady = true;
+      // Geschätzte Seitenzahl aus dem Textumfang (1 Location = 1000 Zeichen, ~1800 Zeichen/Seite)
+      if (book.locations.total > 0) {
+        record.pageCount = Math.max(1, Math.round((book.locations.total * 1000) / 1800));
+        App.Store.save();
+      }
       if (currentLocation) onRelocated(currentLocation);
     } catch (e) {
       console.warn('Locations fehlgeschlagen', e);
