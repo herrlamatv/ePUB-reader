@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leselampe – EPUB & PDF Reader</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232563eb' d='M4 3h7a2 2 0 0 1 2 2v14a1 1 0 0 1-1-1H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm16 0h-7a2 2 0 0 0-2 2v14a1 1 0 0 0 1-1h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/pdf_viewer.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════ BIBLIOTHEK ══════════════════════ -->
+  <section id="view-library">
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <span class="icon logo" data-icon="logo"></span>
+        <h1>Leselampe</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <button id="nav-all-books" class="sidebar-item active">
+          <span class="icon" data-icon="books"></span>
+          <span class="label" data-i18n="library.allBooks">Alle Bücher</span>
+          <span class="count-badge" id="count-all">0</span>
+        </button>
+        <div class="sidebar-section-title" data-i18n="library.authors">Autoren</div>
+        <ul id="author-list"></ul>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="btn-stats" class="icon-btn" data-i18n-title="stats.title">
+          <span class="icon" data-icon="chart"></span>
+        </button>
+        <button id="btn-lang" class="icon-btn lang-btn" data-i18n-title="settings.language">DE</button>
+        <button id="btn-theme" class="icon-btn" data-i18n-title="settings.theme">
+          <span class="icon" data-icon="sun"></span>
+        </button>
+        <button id="btn-help" class="icon-btn" data-i18n-title="shortcuts.title">
+          <span class="icon" data-icon="help"></span>
+        </button>
+      </div>
+    </aside>
+
+    <div id="library-main">
+      <header id="library-topbar">
+        <button id="btn-sidebar-toggle" class="icon-btn" data-i18n-title="library.toggleSidebar">
+          <span class="icon" data-icon="menu"></span>
+        </button>
+        <div class="search-wrap">
+          <span class="icon" data-icon="search"></span>
+          <input id="library-search" type="search" data-i18n-placeholder="library.searchPlaceholder" placeholder="Titel oder Autor suchen …">
+        </div>
+        <select id="library-sort" class="select">
+          <option value="recent" data-i18n="library.sortRecent">Zuletzt gelesen</option>
+          <option value="title" data-i18n="library.sortTitle">Titel</option>
+          <option value="author" data-i18n="library.sortAuthor">Autor</option>
+          <option value="progress" data-i18n="library.sortProgress">Fortschritt</option>
+          <option value="added" data-i18n="library.sortAdded">Hinzugefügt</option>
+        </select>
+        <button id="btn-view-toggle" class="icon-btn" data-i18n-title="library.toggleView">
+          <span class="icon" data-icon="list"></span>
+        </button>
+        <button id="btn-rescan" class="icon-btn" data-i18n-title="library.rescan">
+          <span class="icon" data-icon="refresh"></span>
+        </button>
+        <button id="btn-import" class="btn btn-primary">
+          <span class="icon" data-icon="plus"></span>
+          <span data-i18n="library.import">Importieren</span>
+        </button>
+      </header>
+
+      <div id="permission-banner" hidden>
+        <span class="icon" data-icon="warning"></span>
+        <span data-i18n="library.permissionNeeded">Der Zugriff auf deinen Bibliotheksordner muss erneut erlaubt werden.</span>
+        <button id="btn-regrant" class="btn btn-primary" data-i18n="library.permissionGrant">Zugriff erlauben</button>
+      </div>
+
+      <div id="library-scroll">
+        <div id="book-grid" class="grid"></div>
+
+        <div id="empty-state" hidden>
+          <span class="icon big" data-icon="library"></span>
+          <h2 data-i18n="library.emptyTitle">Willkommen bei Leselampe</h2>
+          <p data-i18n="library.emptyText">Wähle einen Ordner auf deinem Computer als Bibliothek. Importierte Bücher werden dort automatisch nach Autor sortiert abgelegt.</p>
+          <button id="btn-pick-folder" class="btn btn-primary btn-lg">
+            <span class="icon" data-icon="folder"></span>
+            <span data-i18n="library.pickFolder">Bibliotheksordner wählen</span>
+          </button>
+          <p id="fallback-note" class="muted" hidden data-i18n="library.fallbackNote">Dein Browser unterstützt keinen Ordnerzugriff (File System Access API). Mit Chrome oder Edge erhältst du die volle Bibliotheksfunktion – alternativ kannst du einzelne Dateien öffnen:</p>
+          <button id="btn-open-single" class="btn" hidden>
+            <span class="icon" data-icon="book"></span>
+            <span data-i18n="library.openSingle">Einzelne Datei öffnen</span>
+          </button>
+        </div>
+
+        <div id="no-results" hidden>
+          <p data-i18n="library.noResults">Keine Bücher gefunden.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════ READER ══════════════════════ -->
+  <section id="view-reader" hidden>
+    <header id="reader-topbar" class="reader-chrome">
+      <button id="btn-back" class="icon-btn" data-i18n-title="reader.back">
+        <span class="icon" data-icon="arrowLeft"></span>
+      </button>
+      <div id="reader-title"></div>
+      <div class="topbar-actions">
+        <button id="btn-bookmark" class="icon-btn" data-i18n-title="reader.bookmark">
+          <span class="icon" data-icon="bookmark"></span>
+        </button>
+        <button id="btn-toc" class="icon-btn" data-i18n-title="reader.toc">
+          <span class="icon" data-icon="toc"></span>
+        </button>
+        <button id="btn-annotations" class="icon-btn" data-i18n-title="reader.annotations">
+          <span class="icon" data-icon="highlight"></span>
+        </button>
+        <button id="btn-search" class="icon-btn" data-i18n-title="reader.search">
+          <span class="icon" data-icon="search"></span>
+        </button>
+        <button id="btn-tts" class="icon-btn" data-i18n-title="tts.title">
+          <span class="icon" data-icon="speaker"></span>
+        </button>
+        <button id="btn-reader-settings" class="icon-btn" data-i18n-title="settings.title">
+          <span class="icon" data-icon="settings"></span>
+        </button>
+      </div>
+    </header>
+
+    <div id="reader-content">
+      <div id="epub-container" hidden>
+        <button id="tap-left" class="tap-zone" tabindex="-1"><span class="icon" data-icon="chevronLeft"></span></button>
+        <div id="epub-viewport"></div>
+        <button id="tap-right" class="tap-zone" tabindex="-1"><span class="icon" data-icon="chevronRight"></span></button>
+      </div>
+      <div id="pdf-viewport" hidden></div>
+    </div>
+
+    <footer id="reader-bottombar" class="reader-chrome">
+      <div id="epub-controls" hidden>
+        <span id="chapter-label" class="bar-label"></span>
+        <input id="progress-slider" type="range" min="0" max="1000" value="0">
+        <span id="progress-label" class="bar-label num">–</span>
+      </div>
+      <div id="pdf-controls" hidden>
+        <span class="pdf-page-wrap">
+          <input id="pdf-page-input" type="number" min="1" value="1">
+          <span id="pdf-page-count" class="bar-label num">/ –</span>
+        </span>
+        <input id="pdf-progress-slider" type="range" min="1" max="1" value="1">
+        <span class="zoom-controls">
+          <button id="btn-zoom-out" class="icon-btn sm" title="−"><span class="icon" data-icon="minus"></span></button>
+          <button id="btn-zoom-mode" class="btn sm" data-i18n-title="reader.zoomMode"><span id="zoom-label">100 %</span></button>
+          <button id="btn-zoom-in" class="icon-btn sm" title="+"><span class="icon" data-icon="plus"></span></button>
+        </span>
+      </div>
+    </footer>
+
+    <!-- ── Drawer: Inhaltsverzeichnis ── -->
+    <aside id="drawer-toc" class="drawer" hidden>
+      <header class="drawer-header">
+        <h3 data-i18n="reader.toc">Inhaltsverzeichnis</h3>
+        <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
+      </header>
+      <div class="drawer-body" id="toc-list"></div>
+    </aside>
+
+    <!-- ── Drawer: Lesezeichen & Markierungen ── -->
+    <aside id="drawer-annotations" class="drawer" hidden>
+      <header class="drawer-header">
+        <h3 data-i18n="reader.annotations">Anmerkungen</h3>
+        <button id="btn-export-annotations" class="icon-btn" data-i18n-title="annotations.export">
+          <span class="icon" data-icon="download"></span>
+        </button>
+        <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
+      </header>
+      <div class="drawer-tabs">
+        <button class="drawer-tab active" data-tab="bookmarks" data-i18n="annotations.bookmarks">Lesezeichen</button>
+        <button class="drawer-tab" data-tab="highlights" data-i18n="annotations.highlights">Markierungen</button>
+      </div>
+      <div class="drawer-body">
+        <div id="bookmark-list" class="annotation-list"></div>
+        <div id="highlight-list" class="annotation-list" hidden></div>
+      </div>
+    </aside>
+
+    <!-- ── Drawer: Suche ── -->
+    <aside id="drawer-search" class="drawer" hidden>
+      <header class="drawer-header">
+        <h3 data-i18n="reader.search">Suche im Buch</h3>
+        <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
+      </header>
+      <div class="drawer-search-input">
+        <input id="book-search-input" type="search" data-i18n-placeholder="search.placeholder" placeholder="Suchbegriff …">
+        <span id="search-status" class="muted"></span>
+      </div>
+      <div class="drawer-body" id="search-results"></div>
+    </aside>
+
+    <!-- ── Drawer: Vorlesen ── -->
+    <aside id="drawer-tts" class="drawer" hidden>
+      <header class="drawer-header">
+        <h3 data-i18n="tts.title">Vorlesen</h3>
+        <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
+      </header>
+      <div class="drawer-body">
+        <div class="tts-controls">
+          <button id="btn-tts-prev" class="icon-btn" data-i18n-title="tts.prev"><span class="icon" data-icon="skipBack"></span></button>
+          <button id="btn-tts-play" class="icon-btn xl" data-i18n-title="tts.play"><span class="icon" data-icon="play"></span></button>
+          <button id="btn-tts-stop" class="icon-btn" data-i18n-title="tts.stop"><span class="icon" data-icon="stop"></span></button>
+          <button id="btn-tts-next" class="icon-btn" data-i18n-title="tts.next"><span class="icon" data-icon="skipForward"></span></button>
+        </div>
+        <p id="tts-status" class="muted tts-status"></p>
+        <div class="setting-row">
+          <label data-i18n="tts.voice">Stimme</label>
+          <select id="tts-voice" class="select"></select>
+        </div>
+        <div class="setting-row">
+          <label data-i18n="tts.rate">Geschwindigkeit</label>
+          <div class="stepper-wrap">
+            <input id="tts-rate" type="range" min="0.5" max="2" step="0.1" value="1">
+            <span id="tts-rate-label" class="num">1.0×</span>
+          </div>
+        </div>
+        <p class="muted" id="tts-unsupported" hidden data-i18n="tts.unsupported">Dein Browser unterstützt keine Sprachausgabe.</p>
+      </div>
+    </aside>
+
+    <!-- ── Drawer: Einstellungen ── -->
+    <aside id="drawer-settings" class="drawer" hidden>
+      <header class="drawer-header">
+        <h3 data-i18n="settings.title">Einstellungen</h3>
+        <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
+      </header>
+      <div class="drawer-body">
+        <div class="setting-group">
+          <div class="setting-group-title" data-i18n="settings.appearance">Darstellung</div>
+          <div class="theme-picker" id="theme-picker">
+            <button class="theme-swatch" data-theme-value="light" title="Hell"><span data-i18n="settings.themeLight">Hell</span></button>
+            <button class="theme-swatch" data-theme-value="sepia" title="Sepia"><span data-i18n="settings.themeSepia">Sepia</span></button>
+            <button class="theme-swatch" data-theme-value="dark" title="Dunkel"><span data-i18n="settings.themeDark">Dunkel</span></button>
+          </div>
+        </div>
+
+        <div class="setting-group" id="settings-epub">
+          <div class="setting-group-title" data-i18n="settings.typography">Schrift (EPUB)</div>
+          <div class="setting-row">
+            <label data-i18n="settings.fontSize">Schriftgröße</label>
+            <div class="stepper">
+              <button id="font-size-dec" class="icon-btn sm"><span class="icon" data-icon="minus"></span></button>
+              <span id="font-size-label" class="num">100 %</span>
+              <button id="font-size-inc" class="icon-btn sm"><span class="icon" data-icon="plus"></span></button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label data-i18n="settings.fontFamily">Schriftart</label>
+            <select id="font-family" class="select">
+              <option value="original" data-i18n="settings.fontOriginal">Original</option>
+              <option value="serif">Serif</option>
+              <option value="sans-serif">Sans-Serif</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label data-i18n="settings.lineHeight">Zeilenabstand</label>
+            <div class="stepper">
+              <button id="line-height-dec" class="icon-btn sm"><span class="icon" data-icon="minus"></span></button>
+              <span id="line-height-label" class="num">1.6</span>
+              <button id="line-height-inc" class="icon-btn sm"><span class="icon" data-icon="plus"></span></button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label data-i18n="settings.margins">Seitenränder</label>
+            <div class="stepper">
+              <button id="margin-dec" class="icon-btn sm"><span class="icon" data-icon="minus"></span></button>
+              <span id="margin-label" class="num">48</span>
+              <button id="margin-inc" class="icon-btn sm"><span class="icon" data-icon="plus"></span></button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label data-i18n="settings.flow">Anzeige</label>
+            <select id="epub-flow" class="select">
+              <option value="paginated" data-i18n="settings.flowPaginated">Seiten</option>
+              <option value="scrolled" data-i18n="settings.flowScrolled">Fortlaufend</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-group" id="settings-pdf">
+          <div class="setting-group-title">PDF</div>
+          <div class="setting-row">
+            <label data-i18n="settings.pdfInvert">Im Dunkelmodus invertieren</label>
+            <input type="checkbox" id="pdf-invert" class="toggle">
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-group-title" data-i18n="settings.general">Allgemein</div>
+          <div class="setting-row">
+            <label data-i18n="settings.language">Sprache</label>
+            <select id="setting-language" class="select">
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div id="drawer-backdrop" hidden></div>
+  </section>
+</div>
+
+<!-- ══════════════════════ Floating UI ══════════════════════ -->
+<div id="selection-popup" hidden>
+  <button class="hl-dot yellow" data-color="yellow"></button>
+  <button class="hl-dot green" data-color="green"></button>
+  <button class="hl-dot blue" data-color="blue"></button>
+  <button class="hl-dot pink" data-color="pink"></button>
+  <span class="popup-sep"></span>
+  <button id="sel-note" class="icon-btn sm" data-i18n-title="annotations.addNote"><span class="icon" data-icon="note"></span></button>
+  <button id="sel-copy" class="icon-btn sm" data-i18n-title="annotations.copy"><span class="icon" data-icon="copy"></span></button>
+  <button id="sel-tts" class="icon-btn sm" data-i18n-title="tts.fromHere"><span class="icon" data-icon="speaker"></span></button>
+</div>
+
+<div id="note-popover" hidden>
+  <div class="note-colors">
+    <button class="hl-dot yellow" data-color="yellow"></button>
+    <button class="hl-dot green" data-color="green"></button>
+    <button class="hl-dot blue" data-color="blue"></button>
+    <button class="hl-dot pink" data-color="pink"></button>
+    <span class="popup-sep"></span>
+    <button id="note-delete" class="icon-btn sm danger" data-i18n-title="annotations.delete"><span class="icon" data-icon="trash"></span></button>
+    <button id="note-close" class="icon-btn sm" data-i18n-title="common.close"><span class="icon" data-icon="close"></span></button>
+  </div>
+  <blockquote id="note-excerpt"></blockquote>
+  <textarea id="note-text" rows="3" data-i18n-placeholder="annotations.notePlaceholder" placeholder="Notiz hinzufügen …"></textarea>
+</div>
+
+<div id="drop-overlay" hidden>
+  <div class="drop-inner">
+    <span class="icon big" data-icon="download"></span>
+    <p data-i18n="library.dropHere">Zum Importieren hier ablegen</p>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- ══════════════════════ Dialoge ══════════════════════ -->
+<dialog id="dialog-confirm">
+  <p id="confirm-message"></p>
+  <div class="dialog-actions">
+    <button id="confirm-cancel" class="btn" data-i18n="common.cancel">Abbrechen</button>
+    <button id="confirm-ok" class="btn btn-danger" data-i18n="common.ok">OK</button>
+  </div>
+</dialog>
+
+<dialog id="dialog-stats">
+  <header class="dialog-header">
+    <h2 data-i18n="stats.title">Lesestatistik</h2>
+    <button class="icon-btn dialog-close"><span class="icon" data-icon="close"></span></button>
+  </header>
+  <div class="stats-totals">
+    <div class="stat-tile"><span class="stat-value" id="stat-today">–</span><span class="stat-label" data-i18n="stats.today">Heute</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-week">–</span><span class="stat-label" data-i18n="stats.week">Diese Woche</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-total">–</span><span class="stat-label" data-i18n="stats.total">Gesamt</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-streak">–</span><span class="stat-label" data-i18n="stats.streak">Serie</span></div>
+  </div>
+  <div id="stats-chart"></div>
+  <h3 data-i18n="stats.perBook">Zeit pro Buch</h3>
+  <div id="stats-books"></div>
+</dialog>
+
+<dialog id="dialog-shortcuts">
+  <header class="dialog-header">
+    <h2 data-i18n="shortcuts.title">Tastaturkürzel</h2>
+    <button class="icon-btn dialog-close"><span class="icon" data-icon="close"></span></button>
+  </header>
+  <div id="shortcuts-list"></div>
+</dialog>
+
+<dialog id="dialog-details">
+  <header class="dialog-header">
+    <h2 data-i18n="details.title">Buchdetails</h2>
+    <button class="icon-btn dialog-close"><span class="icon" data-icon="close"></span></button>
+  </header>
+  <div class="details-body">
+    <div id="details-cover" class="details-cover"></div>
+    <div class="details-fields">
+      <label data-i18n="details.bookTitle">Titel</label>
+      <input id="details-title" type="text">
+      <label data-i18n="details.author">Autor</label>
+      <input id="details-author" type="text">
+      <div id="details-meta" class="muted"></div>
+    </div>
+  </div>
+  <div class="dialog-actions">
+    <button id="details-delete" class="btn btn-danger" data-i18n="details.delete">Löschen</button>
+    <span class="spacer"></span>
+    <button id="details-cancel" class="btn" data-i18n="common.cancel">Abbrechen</button>
+    <button id="details-save" class="btn btn-primary" data-i18n="common.save">Speichern</button>
+  </div>
+</dialog>
+
+<input type="file" id="file-input" accept=".epub,.pdf" multiple hidden>
+
+<!-- Vendor (Reihenfolge wichtig: jszip vor epub.js) -->
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/epub.min.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<!-- App-Module (definieren nur; app.js ruft App.init()) -->
+<script src="js/utils.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/db.js"></script>
+<script src="js/fs.js"></script>
+<script src="js/store.js"></script>
+<script src="js/metadata.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/annotations.js"></script>
+<script src="js/search.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/reader-epub.js"></script>
+<script src="js/reader-pdf.js"></script>
+<script src="js/library.js"></script>
+<script src="js/shortcuts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

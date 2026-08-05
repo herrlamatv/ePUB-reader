@@ -1,0 +1,73 @@
+/* Farbthemen über CSS Custom Properties. data-theme auf <html>. */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f5f5f4;
+  --surface-2: #ebebe9;
+  --fg: #1c1917;
+  --fg-muted: #78716c;
+  --accent: #2563eb;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --border: #e7e5e4;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --danger: #dc2626;
+  --warning-bg: #fef3c7;
+  --warning-fg: #92400e;
+
+  --hl-yellow: rgba(250, 204, 21, 0.45);
+  --hl-green: rgba(74, 222, 128, 0.45);
+  --hl-blue: rgba(96, 165, 250, 0.45);
+  --hl-pink: rgba(244, 114, 182, 0.45);
+
+  --reader-bg: #ffffff;
+  --reader-fg: #1c1917;
+  --reader-link: #2563eb;
+}
+
+[data-theme="sepia"] {
+  --bg: #f6f0e4;
+  --surface: #efe6d5;
+  --surface-2: #e6dac4;
+  --fg: #433422;
+  --fg-muted: #8a7860;
+  --accent: #b45309;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(180, 83, 9, 0.12);
+  --border: #e0d5bf;
+  --shadow: 0 4px 24px rgba(80, 60, 20, 0.12);
+  --shadow-sm: 0 1px 4px rgba(80, 60, 20, 0.10);
+  --warning-bg: #f3e5c8;
+  --warning-fg: #7a5210;
+
+  --reader-bg: #f6f0e4;
+  --reader-fg: #433422;
+  --reader-link: #b45309;
+}
+
+[data-theme="dark"] {
+  --bg: #111110;
+  --surface: #1c1b1a;
+  --surface-2: #262524;
+  --fg: #d6d3d1;
+  --fg-muted: #8d8a87;
+  --accent: #3b82f6;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(59, 130, 246, 0.18);
+  --border: #2e2d2b;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --danger: #ef4444;
+  --warning-bg: #3a2f10;
+  --warning-fg: #fbbf24;
+
+  --hl-yellow: rgba(250, 204, 21, 0.35);
+  --hl-green: rgba(74, 222, 128, 0.35);
+  --hl-blue: rgba(96, 165, 250, 0.35);
+  --hl-pink: rgba(244, 114, 182, 0.35);
+
+  --reader-bg: #111110;
+  --reader-fg: #d6d3d1;
+  --reader-link: #60a5fa;
+}
