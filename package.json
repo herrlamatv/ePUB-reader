@@ -1,7 +1,7 @@
 {
   "name": "leselampe",
   "version": "1.0.0",
-  "description": "Statischer EPUB- & PDF-Reader mit lokaler, nach Autor sortierter Bibliothek",
+  "description": "simple ePUB and PDF reader",
   "private": true,
   "scripts": {
     "start": "node serve.js"
