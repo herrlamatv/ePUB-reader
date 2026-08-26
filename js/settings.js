@@ -31,6 +31,74 @@ App.Settings = (function () {
     applyTheme(next);
   }
 
+  /* ── Sprache ── */
+
+  /* Wechselt die Sprache; I18n schreibt den Cookie, data.json wird nachgezogen */
+  function changeLanguage(l) {
+    App.I18n.setLanguage(l);
+    if (App.Store.getData()) {
+      App.Store.settings().language = App.I18n.language();
+      App.Store.save();
+    }
+  }
+
+  /* Schließt die Sprachwahl ab; wird vom Weiter-Button bzw. Esc aufgerufen */
+  let finishLanguageDialog = null;
+
+  /**
+   * Sprachwahl beim ersten Start. Ein Klick wendet die Sprache sofort als
+   * Vorschau an, „Weiter" (oder Esc) schreibt sie in den Cookie.
+   */
+  function askLanguage() {
+    const dlg = $('dialog-language');
+    if (!dlg || typeof dlg.showModal !== 'function') {
+      App.I18n.confirmChoice();
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      finishLanguageDialog = () => {
+        finishLanguageDialog = null;    // nur einmal abschließen
+        App.I18n.confirmChoice();       // schreibt Cookie + localStorage
+        if (App.Store.getData()) {
+          App.Store.settings().language = App.I18n.language();
+          App.Store.save();
+        }
+        if (dlg.open) dlg.close();
+        resolve();
+      };
+      App.I18n.syncControls();
+      dlg.showModal();
+    });
+  }
+
+  function bindLanguageDialog() {
+    const dlg = $('dialog-language');
+    if (!dlg) return;
+    dlg.querySelectorAll('.lang-choice').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        // Vorschau: noch nicht persistieren. Ohne geladene Daten kein Re-Render anstoßen.
+        App.I18n.setLanguage(btn.dataset.lang, {
+          persist: false,
+          silent: !App.Store.getData()
+        });
+      });
+    });
+    // Direkt am Klick abschließen – auf das close-Event des <dialog> ist kein Verlass.
+    $('lang-continue').addEventListener('click', () => {
+      if (finishLanguageDialog) finishLanguageDialog();
+    });
+    ['close', 'cancel'].forEach((evName) => {
+      dlg.addEventListener(evName, () => {
+        if (finishLanguageDialog) finishLanguageDialog();
+      });
+    });
+    // Esc zusätzlich direkt abfangen, damit der Start nie an einem
+    // ausbleibenden close-Event hängen bleibt
+    dlg.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && finishLanguageDialog) finishLanguageDialog();
+    });
+  }
+
   /* ── EPUB-Typografie (mit Buch-Override) ── */
 
   function epubSettings() {
@@ -68,7 +136,16 @@ App.Settings = (function () {
   function applyFromStore() {
     const s = App.Store.settings();
     applyTheme(s.theme, false);
-    App.I18n.setLanguage(s.language, { silent: true });
+    if (App.I18n.hasStoredPreference()) {
+      // Der Cookie ist führend – data.json nachziehen, falls es abweicht
+      if (s.language !== App.I18n.language()) {
+        s.language = App.I18n.language();
+        App.Store.save();
+      }
+      App.I18n.syncControls();
+    } else {
+      App.I18n.setLanguage(s.language, { silent: true });
+    }
     $('pdf-invert').checked = !!s.pdf.invertDark;
     syncTypographyUI();
     App.Library.syncControls();
@@ -87,21 +164,13 @@ App.Settings = (function () {
       if (swatch) applyTheme(swatch.dataset.themeValue);
     });
     $('btn-theme').addEventListener('click', cycleTheme);
-    $('btn-lang').addEventListener('click', () => {
-      const next = App.I18n.language() === 'de' ? 'en' : 'de';
-      App.I18n.setLanguage(next);
-      if (App.Store.getData()) {
-        App.Store.settings().language = next;
-        App.Store.save();
-      }
+    document.querySelectorAll('.lang-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        changeLanguage(App.I18n.language() === 'de' ? 'en' : 'de');
+      });
     });
-    $('setting-language').addEventListener('change', (ev) => {
-      App.I18n.setLanguage(ev.target.value);
-      if (App.Store.getData()) {
-        App.Store.settings().language = ev.target.value;
-        App.Store.save();
-      }
-    });
+    $('setting-language').addEventListener('change', (ev) => changeLanguage(ev.target.value));
+    bindLanguageDialog();
 
     // Typografie-Stepper
     const step = (key, delta, min, max, round) => {
@@ -131,5 +200,8 @@ App.Settings = (function () {
     setEpubSetting('fontSize', App.Utils.clamp(s.fontSize + delta, 60, 200));
   }
 
-  return { init, applyTheme, cycleTheme, applyFromStore, epubSettings, syncTypographyUI, adjustFontSize };
+  return {
+    init, applyTheme, cycleTheme, applyFromStore, epubSettings, syncTypographyUI,
+    adjustFontSize, changeLanguage, askLanguage
+  };
 })();

@@ -158,7 +158,12 @@ App.I18N = {
     'app.fileUrlHint': 'Tipp: Starte die App mit „npm start" für die beste Erfahrung.',
     'app.dataSaveError': 'Speichern der Bibliotheksdaten fehlgeschlagen.',
     'app.dataRestored': 'Daten aus Sicherung wiederhergestellt.',
-    'app.dataCorrupt': 'Die Bibliotheksdaten sind beschädigt. Aus Sicherung wiederherstellen?'
+    'app.dataCorrupt': 'Die Bibliotheksdaten sind beschädigt. Aus Sicherung wiederherstellen?',
+    'app.title': 'Leselampe – EPUB- & PDF-Reader',
+
+    'welcome.title': 'Sprache wählen',
+    'welcome.subtitle': 'In welcher Sprache möchtest du Leselampe nutzen? Du kannst die Sprache später jederzeit in den Einstellungen ändern.',
+    'welcome.continue': 'Weiter'
   },
 
   en: {
@@ -317,21 +322,80 @@ App.I18N = {
     'app.fileUrlHint': 'Tip: start the app with "npm start" for the best experience.',
     'app.dataSaveError': 'Failed to save library data.',
     'app.dataRestored': 'Data restored from backup.',
-    'app.dataCorrupt': 'Library data is corrupted. Restore from backup?'
+    'app.dataCorrupt': 'Library data is corrupted. Restore from backup?',
+    'app.title': 'Leselampe – EPUB & PDF reader',
+
+    'welcome.title': 'Choose your language',
+    'welcome.subtitle': 'Which language would you like to use Leselampe in? You can change the language at any time in the settings.',
+    'welcome.continue': 'Continue'
   }
 };
 
 App.I18n = (function () {
   'use strict';
 
-  let lang = 'de';
+  const SUPPORTED = ['de', 'en'];
+  const FALLBACK = 'de';
+  const COOKIE_KEY = 'leselampe_lang';
+  const COOKIE_DAYS = 365;
+  const STORAGE_KEY = 'leselampe-lang'; // Notnagel, wenn Cookies blockiert sind (z. B. file://)
+
+  let lang = FALLBACK;
+  let chosen = false; // true, sobald eine Sprache bewusst gewählt und gespeichert wurde
+
+  /* ══════════ Persistenz: Cookie (führend) + localStorage ══════════ */
+
+  function readCookie(name) {
+    const parts = (document.cookie || '').split(';');
+    for (let i = 0; i < parts.length; i += 1) {
+      const eq = parts[i].indexOf('=');
+      if (eq < 0) continue;
+      if (parts[i].slice(0, eq).trim() === name) {
+        return decodeURIComponent(parts[i].slice(eq + 1).trim());
+      }
+    }
+    return null;
+  }
+
+  function writeCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(value)
+      + '; expires=' + expires + '; path=/; SameSite=Lax';
+  }
+
+  function persist(l) {
+    try { writeCookie(COOKIE_KEY, l, COOKIE_DAYS); } catch (e) { /* egal */ }
+    try { localStorage.setItem(STORAGE_KEY, l); } catch (e) { /* egal */ }
+  }
+
+  function readPersisted() {
+    let v = null;
+    try { v = readCookie(COOKIE_KEY); } catch (e) { v = null; }
+    if (SUPPORTED.indexOf(v) >= 0) return v;
+    try { v = localStorage.getItem(STORAGE_KEY); } catch (e) { v = null; }
+    return SUPPORTED.indexOf(v) >= 0 ? v : null;
+  }
+
+  /* Browsersprache als Vorauswahl für den Startdialog */
+  function detect() {
+    const cands = (navigator.languages && navigator.languages.length)
+      ? navigator.languages
+      : [navigator.language || ''];
+    for (let i = 0; i < cands.length; i += 1) {
+      const base = String(cands[i]).toLowerCase().split('-')[0];
+      if (SUPPORTED.indexOf(base) >= 0) return base;
+    }
+    return FALLBACK;
+  }
+
+  /* ══════════ Übersetzen ══════════ */
 
   function t(key, params) {
-    const dict = App.I18N[lang] || App.I18N.de;
-    let s = dict[key] || App.I18N.de[key] || key;
+    const dict = App.I18N[lang] || App.I18N[FALLBACK];
+    let s = dict[key] || App.I18N[FALLBACK][key] || key;
     if (params) {
       Object.keys(params).forEach((k) => {
-        s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+        s = s.replace(new RegExp('\{' + k + '\}', 'g'), params[k]);
       });
     }
     return s;
@@ -340,6 +404,17 @@ App.I18n = (function () {
   function locale() { return lang === 'de' ? 'de-DE' : 'en-US'; }
 
   function language() { return lang; }
+
+  function supported() { return SUPPORTED.slice(); }
+
+  /* Wurde schon einmal bewusst eine Sprache gewählt? Steuert die Abfrage beim ersten Start. */
+  function hasStoredPreference() { return chosen; }
+
+  /* Aktuell angezeigte Sprache festschreiben (Bestätigung im Startdialog) */
+  function confirmChoice() {
+    persist(lang);
+    chosen = true;
+  }
 
   /* Alle data-i18n / data-i18n-title / data-i18n-placeholder im DOM aktualisieren */
   function applyToDom(root) {
@@ -353,28 +428,58 @@ App.I18n = (function () {
     scope.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
       el.placeholder = t(el.dataset.i18nPlaceholder);
     });
+    if (!root) document.title = t('app.title');
   }
 
+  /* Alle Sprachschalter der Oberfläche auf den aktuellen Stand bringen */
+  function syncControls() {
+    document.querySelectorAll('.lang-btn').forEach((el) => {
+      el.textContent = lang.toUpperCase();
+    });
+    const langSelect = document.getElementById('setting-language');
+    if (langSelect) langSelect.value = lang;
+    document.querySelectorAll('.lang-choice').forEach((el) => {
+      const on = el.dataset.lang === lang;
+      el.classList.toggle('active', on);
+      el.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+
+  /**
+   * Sprache umschalten.
+   * opts.silent  – kein 'lang:changed'-Event (beim Init)
+   * opts.persist – false: nur anzeigen, noch nicht im Cookie speichern (Vorschau im Startdialog)
+   */
   function setLanguage(newLang, opts) {
-    if (newLang !== 'de' && newLang !== 'en') return;
+    if (SUPPORTED.indexOf(newLang) < 0) return;
+    const o = opts || {};
     lang = newLang;
     document.documentElement.lang = newLang;
-    try { localStorage.setItem('leselampe-lang', newLang); } catch (e) { /* egal */ }
-    applyToDom();
-    const langBtn = document.getElementById('btn-lang');
-    if (langBtn) langBtn.textContent = newLang.toUpperCase();
-    const langSelect = document.getElementById('setting-language');
-    if (langSelect) langSelect.value = newLang;
-    if (!opts || !opts.silent) App.Utils.emit('lang:changed', newLang);
-  }
-
-  function init(preferred) {
-    let l = preferred;
-    if (!l) {
-      try { l = localStorage.getItem('leselampe-lang'); } catch (e) { /* egal */ }
+    if (o.persist !== false) {
+      persist(newLang);
+      chosen = true;
     }
-    setLanguage(l === 'en' ? 'en' : 'de', { silent: true });
+    applyToDom();
+    syncControls();
+    if (!o.silent) App.Utils.emit('lang:changed', newLang);
   }
 
-  return { t, locale, language, setLanguage, applyToDom, init };
+  /**
+   * Start: gespeicherte Sprache anwenden (Cookie → localStorage).
+   * Ohne gespeicherte Sprache wird die Browsersprache nur vorgeblendet –
+   * geschrieben wird erst, wenn der Nutzer im Startdialog bestätigt.
+   */
+  function init(preferred) {
+    const stored = SUPPORTED.indexOf(preferred) >= 0 ? preferred : readPersisted();
+    if (stored) {
+      setLanguage(stored, { silent: true });
+    } else {
+      setLanguage(detect(), { silent: true, persist: false });
+    }
+  }
+
+  return {
+    t, locale, language, supported, setLanguage, applyToDom, syncControls,
+    init, hasStoredPreference, confirmChoice
+  };
 })();

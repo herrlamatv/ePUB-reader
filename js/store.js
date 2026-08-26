@@ -18,7 +18,7 @@ App.Store = (function () {
       version: 1,
       revision: 0,
       settings: {
-        language: 'de',
+        language: (App.I18n && App.I18n.language()) || 'de',
         theme: 'light',
         libraryView: 'grid',
         librarySort: 'recent',

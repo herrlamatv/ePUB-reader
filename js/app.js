@@ -236,6 +236,12 @@ App.state = {
     if (window.pdfjsLib) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
     }
+
+    // Erster Start: Sprache abfragen, bevor die Oberfläche gefüllt wird
+    if (!App.I18n.hasStoredPreference()) {
+      await App.Settings.askLanguage();
+    }
+
     if (location.protocol === 'file:') {
       setTimeout(() => App.Utils.toast(App.I18n.t('app.fileUrlHint')), 1200);
     }

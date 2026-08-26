@@ -64,6 +64,7 @@
         <button id="btn-rescan" class="icon-btn" data-i18n-title="library.rescan">
           <span class="icon" data-icon="refresh"></span>
         </button>
+        <button id="btn-lang-top" class="icon-btn lang-btn" data-i18n-title="settings.language">DE</button>
         <button id="btn-import" class="btn btn-primary">
           <span class="icon" data-icon="plus"></span>
           <span data-i18n="library.import">Importieren</span>
@@ -401,6 +402,29 @@
     <span class="spacer"></span>
     <button id="details-cancel" class="btn" data-i18n="common.cancel">Abbrechen</button>
     <button id="details-save" class="btn btn-primary" data-i18n="common.save">Speichern</button>
+  </div>
+</dialog>
+
+<!-- Sprachwahl beim ersten Start (Auswahl landet im Cookie) -->
+<dialog id="dialog-language" class="dialog-welcome">
+  <div class="welcome-brand">
+    <span class="icon logo" data-icon="logo"></span>
+    <span>Leselampe</span>
+  </div>
+  <h2 data-i18n="welcome.title">Sprache wählen</h2>
+  <p class="welcome-sub" data-i18n="welcome.subtitle">In welcher Sprache möchtest du Leselampe nutzen? Du kannst die Sprache später jederzeit in den Einstellungen ändern.</p>
+  <div class="lang-choices" role="radiogroup">
+    <button type="button" class="lang-choice" data-lang="de" role="radio" aria-checked="false">
+      <span class="lang-code">DE</span>
+      <span class="lang-name">Deutsch</span>
+    </button>
+    <button type="button" class="lang-choice" data-lang="en" role="radio" aria-checked="false">
+      <span class="lang-code">EN</span>
+      <span class="lang-name">English</span>
+    </button>
+  </div>
+  <div class="dialog-actions">
+    <button type="button" id="lang-continue" class="btn btn-primary btn-lg" data-i18n="welcome.continue">Weiter</button>
   </div>
 </dialog>
 
