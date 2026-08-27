@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leselampe – EPUB & PDF Reader</title>
+  <title>ePUB-reader</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232563eb' d='M4 3h7a2 2 0 0 1 2 2v14a1 1 0 0 1-1-1H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm16 0h-7a2 2 0 0 0-2 2v14a1 1 0 0 0 1-1h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/pdf_viewer.css">
   <link rel="stylesheet" href="css/themes.css">
@@ -12,20 +12,20 @@
 <body>
 <div id="app">
 
-  <!-- ══════════════════════ BIBLIOTHEK ══════════════════════ -->
+  <!-- ══════════════════════ LIBRARY ══════════════════════ -->
   <section id="view-library">
     <aside id="sidebar">
       <div class="sidebar-header">
         <span class="icon logo" data-icon="logo"></span>
-        <h1>Leselampe</h1>
+        <h1 data-i18n="app.name">ePUB-reader</h1>
       </div>
       <nav class="sidebar-nav">
         <button id="nav-all-books" class="sidebar-item active">
           <span class="icon" data-icon="books"></span>
-          <span class="label" data-i18n="library.allBooks">Alle Bücher</span>
+          <span class="label" data-i18n="library.allBooks">All books</span>
           <span class="count-badge" id="count-all">0</span>
         </button>
-        <div class="sidebar-section-title" data-i18n="library.authors">Autoren</div>
+        <div class="sidebar-section-title" data-i18n="library.authors">Authors</div>
         <ul id="author-list"></ul>
       </nav>
       <div class="sidebar-footer">
@@ -49,14 +49,14 @@
         </button>
         <div class="search-wrap">
           <span class="icon" data-icon="search"></span>
-          <input id="library-search" type="search" data-i18n-placeholder="library.searchPlaceholder" placeholder="Titel oder Autor suchen …">
+          <input id="library-search" type="search" data-i18n-placeholder="library.searchPlaceholder" placeholder="Search title or author …">
         </div>
         <select id="library-sort" class="select">
-          <option value="recent" data-i18n="library.sortRecent">Zuletzt gelesen</option>
-          <option value="title" data-i18n="library.sortTitle">Titel</option>
-          <option value="author" data-i18n="library.sortAuthor">Autor</option>
-          <option value="progress" data-i18n="library.sortProgress">Fortschritt</option>
-          <option value="added" data-i18n="library.sortAdded">Hinzugefügt</option>
+          <option value="recent" data-i18n="library.sortRecent">Recently read</option>
+          <option value="title" data-i18n="library.sortTitle">Title</option>
+          <option value="author" data-i18n="library.sortAuthor">Author</option>
+          <option value="progress" data-i18n="library.sortProgress">Progress</option>
+          <option value="added" data-i18n="library.sortAdded">Date added</option>
         </select>
         <button id="btn-view-toggle" class="icon-btn" data-i18n-title="library.toggleView">
           <span class="icon" data-icon="list"></span>
@@ -67,14 +67,14 @@
         <button id="btn-lang-top" class="icon-btn lang-btn" data-i18n-title="settings.language">DE</button>
         <button id="btn-import" class="btn btn-primary">
           <span class="icon" data-icon="plus"></span>
-          <span data-i18n="library.import">Importieren</span>
+          <span data-i18n="library.import">Import</span>
         </button>
       </header>
 
       <div id="permission-banner" hidden>
         <span class="icon" data-icon="warning"></span>
-        <span data-i18n="library.permissionNeeded">Der Zugriff auf deinen Bibliotheksordner muss erneut erlaubt werden.</span>
-        <button id="btn-regrant" class="btn btn-primary" data-i18n="library.permissionGrant">Zugriff erlauben</button>
+        <span data-i18n="library.permissionNeeded">Access to your library folder needs to be granted again.</span>
+        <button id="btn-regrant" class="btn btn-primary" data-i18n="library.permissionGrant">Grant access</button>
       </div>
 
       <div id="library-scroll">
@@ -82,21 +82,21 @@
 
         <div id="empty-state" hidden>
           <span class="icon big" data-icon="library"></span>
-          <h2 data-i18n="library.emptyTitle">Willkommen bei Leselampe</h2>
-          <p data-i18n="library.emptyText">Wähle einen Ordner auf deinem Computer als Bibliothek. Importierte Bücher werden dort automatisch nach Autor sortiert abgelegt.</p>
+          <h2 data-i18n="library.emptyTitle">Welcome to ePUB-reader</h2>
+          <p data-i18n="library.emptyText">Choose a folder on your computer as your library. Imported books are automatically organized into author folders there.</p>
           <button id="btn-pick-folder" class="btn btn-primary btn-lg">
             <span class="icon" data-icon="folder"></span>
-            <span data-i18n="library.pickFolder">Bibliotheksordner wählen</span>
+            <span data-i18n="library.pickFolder">Choose library folder</span>
           </button>
-          <p id="fallback-note" class="muted" hidden data-i18n="library.fallbackNote">Dein Browser unterstützt keinen Ordnerzugriff (File System Access API). Mit Chrome oder Edge erhältst du die volle Bibliotheksfunktion – alternativ kannst du einzelne Dateien öffnen:</p>
+          <p id="fallback-note" class="muted" hidden data-i18n="library.fallbackNote">Your browser does not support folder access (File System Access API). Use Chrome or Edge for the full library experience – alternatively you can open single files:</p>
           <button id="btn-open-single" class="btn" hidden>
             <span class="icon" data-icon="book"></span>
-            <span data-i18n="library.openSingle">Einzelne Datei öffnen</span>
+            <span data-i18n="library.openSingle">Open a single file</span>
           </button>
         </div>
 
         <div id="no-results" hidden>
-          <p data-i18n="library.noResults">Keine Bücher gefunden.</p>
+          <p data-i18n="library.noResults">No books found.</p>
         </div>
       </div>
     </div>
@@ -160,27 +160,27 @@
       </div>
     </footer>
 
-    <!-- ── Drawer: Inhaltsverzeichnis ── -->
+    <!-- ── Drawer: table of contents ── -->
     <aside id="drawer-toc" class="drawer" hidden>
       <header class="drawer-header">
-        <h3 data-i18n="reader.toc">Inhaltsverzeichnis</h3>
+        <h3 data-i18n="reader.toc">Table of contents</h3>
         <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
       </header>
       <div class="drawer-body" id="toc-list"></div>
     </aside>
 
-    <!-- ── Drawer: Lesezeichen & Markierungen ── -->
+    <!-- ── Drawer: bookmarks & highlights ── -->
     <aside id="drawer-annotations" class="drawer" hidden>
       <header class="drawer-header">
-        <h3 data-i18n="reader.annotations">Anmerkungen</h3>
+        <h3 data-i18n="reader.annotations">Annotations</h3>
         <button id="btn-export-annotations" class="icon-btn" data-i18n-title="annotations.export">
           <span class="icon" data-icon="download"></span>
         </button>
         <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
       </header>
       <div class="drawer-tabs">
-        <button class="drawer-tab active" data-tab="bookmarks" data-i18n="annotations.bookmarks">Lesezeichen</button>
-        <button class="drawer-tab" data-tab="highlights" data-i18n="annotations.highlights">Markierungen</button>
+        <button class="drawer-tab active" data-tab="bookmarks" data-i18n="annotations.bookmarks">Bookmarks</button>
+        <button class="drawer-tab" data-tab="highlights" data-i18n="annotations.highlights">Highlights</button>
       </div>
       <div class="drawer-body">
         <div id="bookmark-list" class="annotation-list"></div>
@@ -188,23 +188,23 @@
       </div>
     </aside>
 
-    <!-- ── Drawer: Suche ── -->
+    <!-- ── Drawer: search ── -->
     <aside id="drawer-search" class="drawer" hidden>
       <header class="drawer-header">
-        <h3 data-i18n="reader.search">Suche im Buch</h3>
+        <h3 data-i18n="reader.search">Search in book</h3>
         <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
       </header>
       <div class="drawer-search-input">
-        <input id="book-search-input" type="search" data-i18n-placeholder="search.placeholder" placeholder="Suchbegriff …">
+        <input id="book-search-input" type="search" data-i18n-placeholder="search.placeholder" placeholder="Search term …">
         <span id="search-status" class="muted"></span>
       </div>
       <div class="drawer-body" id="search-results"></div>
     </aside>
 
-    <!-- ── Drawer: Vorlesen ── -->
+    <!-- ── Drawer: read aloud ── -->
     <aside id="drawer-tts" class="drawer" hidden>
       <header class="drawer-header">
-        <h3 data-i18n="tts.title">Vorlesen</h3>
+        <h3 data-i18n="tts.title">Read aloud</h3>
         <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
       </header>
       <div class="drawer-body">
@@ -216,40 +216,40 @@
         </div>
         <p id="tts-status" class="muted tts-status"></p>
         <div class="setting-row">
-          <label data-i18n="tts.voice">Stimme</label>
+          <label data-i18n="tts.voice">Voice</label>
           <select id="tts-voice" class="select"></select>
         </div>
         <div class="setting-row">
-          <label data-i18n="tts.rate">Geschwindigkeit</label>
+          <label data-i18n="tts.rate">Speed</label>
           <div class="stepper-wrap">
             <input id="tts-rate" type="range" min="0.5" max="2" step="0.1" value="1">
             <span id="tts-rate-label" class="num">1.0×</span>
           </div>
         </div>
-        <p class="muted" id="tts-unsupported" hidden data-i18n="tts.unsupported">Dein Browser unterstützt keine Sprachausgabe.</p>
+        <p class="muted" id="tts-unsupported" hidden data-i18n="tts.unsupported">Your browser does not support speech synthesis.</p>
       </div>
     </aside>
 
-    <!-- ── Drawer: Einstellungen ── -->
+    <!-- ── Drawer: settings ── -->
     <aside id="drawer-settings" class="drawer" hidden>
       <header class="drawer-header">
-        <h3 data-i18n="settings.title">Einstellungen</h3>
+        <h3 data-i18n="settings.title">Settings</h3>
         <button class="icon-btn drawer-close"><span class="icon" data-icon="close"></span></button>
       </header>
       <div class="drawer-body">
         <div class="setting-group">
-          <div class="setting-group-title" data-i18n="settings.appearance">Darstellung</div>
+          <div class="setting-group-title" data-i18n="settings.appearance">Appearance</div>
           <div class="theme-picker" id="theme-picker">
-            <button class="theme-swatch" data-theme-value="light" title="Hell"><span data-i18n="settings.themeLight">Hell</span></button>
+            <button class="theme-swatch" data-theme-value="light" title="Hell"><span data-i18n="settings.themeLight">Light</span></button>
             <button class="theme-swatch" data-theme-value="sepia" title="Sepia"><span data-i18n="settings.themeSepia">Sepia</span></button>
-            <button class="theme-swatch" data-theme-value="dark" title="Dunkel"><span data-i18n="settings.themeDark">Dunkel</span></button>
+            <button class="theme-swatch" data-theme-value="dark" title="Dunkel"><span data-i18n="settings.themeDark">Dark</span></button>
           </div>
         </div>
 
         <div class="setting-group" id="settings-epub">
-          <div class="setting-group-title" data-i18n="settings.typography">Schrift (EPUB)</div>
+          <div class="setting-group-title" data-i18n="settings.typography">Typography (EPUB)</div>
           <div class="setting-row">
-            <label data-i18n="settings.fontSize">Schriftgröße</label>
+            <label data-i18n="settings.fontSize">Font size</label>
             <div class="stepper">
               <button id="font-size-dec" class="icon-btn sm"><span class="icon" data-icon="minus"></span></button>
               <span id="font-size-label" class="num">100 %</span>
@@ -257,7 +257,7 @@
             </div>
           </div>
           <div class="setting-row">
-            <label data-i18n="settings.fontFamily">Schriftart</label>
+            <label data-i18n="settings.fontFamily">Font family</label>
             <select id="font-family" class="select">
               <option value="original" data-i18n="settings.fontOriginal">Original</option>
               <option value="serif">Serif</option>
@@ -265,7 +265,7 @@
             </select>
           </div>
           <div class="setting-row">
-            <label data-i18n="settings.lineHeight">Zeilenabstand</label>
+            <label data-i18n="settings.lineHeight">Line height</label>
             <div class="stepper">
               <button id="line-height-dec" class="icon-btn sm"><span class="icon" data-icon="minus"></span></button>
               <span id="line-height-label" class="num">1.6</span>
@@ -273,7 +273,7 @@
             </div>
           </div>
           <div class="setting-row">
-            <label data-i18n="settings.margins">Seitenränder</label>
+            <label data-i18n="settings.margins">Margins</label>
             <div class="stepper">
               <button id="margin-dec" class="icon-btn sm"><span class="icon" data-icon="minus"></span></button>
               <span id="margin-label" class="num">48</span>
@@ -281,10 +281,10 @@
             </div>
           </div>
           <div class="setting-row">
-            <label data-i18n="settings.flow">Anzeige</label>
+            <label data-i18n="settings.flow">Layout</label>
             <select id="epub-flow" class="select">
-              <option value="paginated" data-i18n="settings.flowPaginated">Seiten</option>
-              <option value="scrolled" data-i18n="settings.flowScrolled">Fortlaufend</option>
+              <option value="paginated" data-i18n="settings.flowPaginated">Pages</option>
+              <option value="scrolled" data-i18n="settings.flowScrolled">Scrolled</option>
             </select>
           </div>
         </div>
@@ -292,15 +292,15 @@
         <div class="setting-group" id="settings-pdf">
           <div class="setting-group-title">PDF</div>
           <div class="setting-row">
-            <label data-i18n="settings.pdfInvert">Im Dunkelmodus invertieren</label>
+            <label data-i18n="settings.pdfInvert">Invert in dark mode</label>
             <input type="checkbox" id="pdf-invert" class="toggle">
           </div>
         </div>
 
         <div class="setting-group">
-          <div class="setting-group-title" data-i18n="settings.general">Allgemein</div>
+          <div class="setting-group-title" data-i18n="settings.general">General</div>
           <div class="setting-row">
-            <label data-i18n="settings.language">Sprache</label>
+            <label data-i18n="settings.language">Language</label>
             <select id="setting-language" class="select">
               <option value="de">Deutsch</option>
               <option value="en">English</option>
@@ -337,46 +337,46 @@
     <button id="note-close" class="icon-btn sm" data-i18n-title="common.close"><span class="icon" data-icon="close"></span></button>
   </div>
   <blockquote id="note-excerpt"></blockquote>
-  <textarea id="note-text" rows="3" data-i18n-placeholder="annotations.notePlaceholder" placeholder="Notiz hinzufügen …"></textarea>
+  <textarea id="note-text" rows="3" data-i18n-placeholder="annotations.notePlaceholder" placeholder="Add a note …"></textarea>
 </div>
 
 <div id="drop-overlay" hidden>
   <div class="drop-inner">
     <span class="icon big" data-icon="download"></span>
-    <p data-i18n="library.dropHere">Zum Importieren hier ablegen</p>
+    <p data-i18n="library.dropHere">Drop here to import</p>
   </div>
 </div>
 
 <div id="toast-container"></div>
 
-<!-- ══════════════════════ Dialoge ══════════════════════ -->
+<!-- ══════════════════════ Dialogs ══════════════════════ -->
 <dialog id="dialog-confirm">
   <p id="confirm-message"></p>
   <div class="dialog-actions">
-    <button id="confirm-cancel" class="btn" data-i18n="common.cancel">Abbrechen</button>
+    <button id="confirm-cancel" class="btn" data-i18n="common.cancel">Cancel</button>
     <button id="confirm-ok" class="btn btn-danger" data-i18n="common.ok">OK</button>
   </div>
 </dialog>
 
 <dialog id="dialog-stats">
   <header class="dialog-header">
-    <h2 data-i18n="stats.title">Lesestatistik</h2>
+    <h2 data-i18n="stats.title">Reading statistics</h2>
     <button class="icon-btn dialog-close"><span class="icon" data-icon="close"></span></button>
   </header>
   <div class="stats-totals">
-    <div class="stat-tile"><span class="stat-value" id="stat-today">–</span><span class="stat-label" data-i18n="stats.today">Heute</span></div>
-    <div class="stat-tile"><span class="stat-value" id="stat-week">–</span><span class="stat-label" data-i18n="stats.week">Diese Woche</span></div>
-    <div class="stat-tile"><span class="stat-value" id="stat-total">–</span><span class="stat-label" data-i18n="stats.total">Gesamt</span></div>
-    <div class="stat-tile"><span class="stat-value" id="stat-streak">–</span><span class="stat-label" data-i18n="stats.streak">Serie</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-today">–</span><span class="stat-label" data-i18n="stats.today">Today</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-week">–</span><span class="stat-label" data-i18n="stats.week">This week</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-total">–</span><span class="stat-label" data-i18n="stats.total">Total</span></div>
+    <div class="stat-tile"><span class="stat-value" id="stat-streak">–</span><span class="stat-label" data-i18n="stats.streak">Streak</span></div>
   </div>
   <div id="stats-chart"></div>
-  <h3 data-i18n="stats.perBook">Zeit pro Buch</h3>
+  <h3 data-i18n="stats.perBook">Time per book</h3>
   <div id="stats-books"></div>
 </dialog>
 
 <dialog id="dialog-shortcuts">
   <header class="dialog-header">
-    <h2 data-i18n="shortcuts.title">Tastaturkürzel</h2>
+    <h2 data-i18n="shortcuts.title">Keyboard shortcuts</h2>
     <button class="icon-btn dialog-close"><span class="icon" data-icon="close"></span></button>
   </header>
   <div id="shortcuts-list"></div>
@@ -384,35 +384,35 @@
 
 <dialog id="dialog-details">
   <header class="dialog-header">
-    <h2 data-i18n="details.title">Buchdetails</h2>
+    <h2 data-i18n="details.title">Book details</h2>
     <button class="icon-btn dialog-close"><span class="icon" data-icon="close"></span></button>
   </header>
   <div class="details-body">
     <div id="details-cover" class="details-cover"></div>
     <div class="details-fields">
-      <label data-i18n="details.bookTitle">Titel</label>
+      <label data-i18n="details.bookTitle">Title</label>
       <input id="details-title" type="text">
-      <label data-i18n="details.author">Autor</label>
+      <label data-i18n="details.author">Author</label>
       <input id="details-author" type="text">
       <div id="details-meta" class="muted"></div>
     </div>
   </div>
   <div class="dialog-actions">
-    <button id="details-delete" class="btn btn-danger" data-i18n="details.delete">Löschen</button>
+    <button id="details-delete" class="btn btn-danger" data-i18n="details.delete">Delete</button>
     <span class="spacer"></span>
-    <button id="details-cancel" class="btn" data-i18n="common.cancel">Abbrechen</button>
-    <button id="details-save" class="btn btn-primary" data-i18n="common.save">Speichern</button>
+    <button id="details-cancel" class="btn" data-i18n="common.cancel">Cancel</button>
+    <button id="details-save" class="btn btn-primary" data-i18n="common.save">Save</button>
   </div>
 </dialog>
 
-<!-- Sprachwahl beim ersten Start (Auswahl landet im Cookie) -->
+<!-- Language picker on first run (choice goes into the cookie) -->
 <dialog id="dialog-language" class="dialog-welcome">
   <div class="welcome-brand">
     <span class="icon logo" data-icon="logo"></span>
-    <span>Leselampe</span>
+    <span data-i18n="app.name">ePUB-reader</span>
   </div>
-  <h2 data-i18n="welcome.title">Sprache wählen</h2>
-  <p class="welcome-sub" data-i18n="welcome.subtitle">In welcher Sprache möchtest du Leselampe nutzen? Du kannst die Sprache später jederzeit in den Einstellungen ändern.</p>
+  <h2 data-i18n="welcome.title">Choose your language</h2>
+  <p class="welcome-sub" data-i18n="welcome.subtitle">Which language would you like to use ePUB-reader in? You can change the language at any time in the settings.</p>
   <div class="lang-choices" role="radiogroup">
     <button type="button" class="lang-choice" data-lang="de" role="radio" aria-checked="false">
       <span class="lang-code">DE</span>
@@ -424,17 +424,17 @@
     </button>
   </div>
   <div class="dialog-actions">
-    <button type="button" id="lang-continue" class="btn btn-primary btn-lg" data-i18n="welcome.continue">Weiter</button>
+    <button type="button" id="lang-continue" class="btn btn-primary btn-lg" data-i18n="welcome.continue">Continue</button>
   </div>
 </dialog>
 
 <input type="file" id="file-input" accept=".epub,.pdf" multiple hidden>
 
-<!-- Vendor (Reihenfolge wichtig: jszip vor epub.js) -->
+<!-- Vendor (order matters: jszip before epub.js) -->
 <script src="vendor/jszip.min.js"></script>
 <script src="vendor/epub.min.js"></script>
 <script src="vendor/pdf.min.js"></script>
-<!-- App-Module (definieren nur; app.js ruft App.init()) -->
+<!-- App modules (definitions only; app.js runs init) -->
 <script src="js/utils.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/db.js"></script>

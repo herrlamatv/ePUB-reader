@@ -1,4 +1,4 @@
-/* App.Search – Volltextsuche im geöffneten Buch (EPUB: Spine-Walk, PDF: Text-Extraktion) */
+/* App.Search – full text search in the open book (EPUB: spine walk, PDF: text extraction) */
 window.App = window.App || {};
 
 App.Search = (function () {
@@ -68,7 +68,7 @@ App.Search = (function () {
         });
         item.unload();
       } catch (e) {
-        console.warn('Suche in Abschnitt fehlgeschlagen', item.href, e);
+        console.warn('Search failed in section', item.href, e);
       }
       await App.Utils.nextFrame();
     }
@@ -100,7 +100,7 @@ App.Search = (function () {
           addResult({ page: p, excerpt, loc: App.I18n.t('annotations.pageN', { n: p }) }, query);
           idx = lower.indexOf(q, idx + q.length);
         }
-      } catch (e) { /* Seite überspringen */ }
+      } catch (e) { /* skip this page */ }
       if (p % 10 === 0) await App.Utils.nextFrame();
     }
   }
@@ -150,9 +150,9 @@ App.Search = (function () {
       rendition.annotations.highlight(cfi, {}, null, 'leselampe-search-flash',
         { fill: '#60a5fa', 'fill-opacity': '0.45' });
       setTimeout(() => {
-        try { rendition.annotations.remove(cfi, 'highlight'); } catch (e) { /* egal */ }
+        try { rendition.annotations.remove(cfi, 'highlight'); } catch (e) { /* ignore */ }
       }, 2500);
-    } catch (e) { /* egal */ }
+    } catch (e) { /* ignore */ }
   }
 
   function flashPdfResult(pageNum) {

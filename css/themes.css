@@ -1,4 +1,4 @@
-/* Farbthemen über CSS Custom Properties. data-theme auf <html>. */
+/* Color themes via CSS custom properties. data-theme sits on <html>. */
 
 :root {
   --bg: #ffffff;

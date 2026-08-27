@@ -1,4 +1,4 @@
-/* App.Library – Bibliothek: Ordnerwahl, Scan, Import mit Autoren-Sortierung, Ansicht */
+/* App.Library – folder picker, scan, import filed by author, grid and list views */
 window.App = window.App || {};
 
 App.Library = (function () {
@@ -7,7 +7,7 @@ App.Library = (function () {
   let filter = '';
   let activeAuthor = null;            // null = alle, '__unsorted__' = Dateien im Wurzelordner
   const coverUrls = new Map();        // bookId → ObjectURL
-  const sessionFiles = new Map();     // Fallback-Modus: bookId → File (nur für diese Sitzung)
+  const sessionFiles = new Map();     // fallback mode: bookId → File (this session only)
   let progressToast = null;
 
   const $ = (id) => document.getElementById(id);
@@ -75,14 +75,14 @@ App.Library = (function () {
     }
   }
 
-  /* ── Scan & Abgleich (Umbenennungen via Fingerprint erkennen) ── */
+  /* ── Scan & reconcile (renames are detected by fingerprint) ── */
 
   async function scanAndReconcile() {
     let found;
     try {
       found = await App.FS.scan();
     } catch (e) {
-      console.error('Scan fehlgeschlagen', e);
+      console.error('Scan failed', e);
       return;
     }
     const data = App.Store.getData();
@@ -90,7 +90,7 @@ App.Library = (function () {
     const fileByPath = new Map(found.map((f) => [f.path, f]));
     const recordPaths = new Set(records.map((r) => r.path));
 
-    // 1) Pfad-Treffer
+    // 1) match by path
     records.forEach((r) => {
       const f = fileByPath.get(r.path);
       if (f) {
@@ -99,7 +99,7 @@ App.Library = (function () {
       }
     });
 
-    // 2) Unbekannte Dateien: erst Fingerprint gegen verwaiste Records, sonst neuer Eintrag
+    // 2) unknown files: fingerprint against orphaned records first, otherwise a new entry
     const unmatchedFiles = found.filter((f) => !recordPaths.has(f.path));
     const orphanRecords = records.filter((r) => !fileByPath.has(r.path));
     let newCount = 0;
@@ -124,11 +124,11 @@ App.Library = (function () {
         if (meta.cover) await App.DB.set('covers', rec.id, meta.cover);
         newCount += 1;
       } catch (e) {
-        console.warn('Datei übersprungen', f.path, e);
+        console.warn('Skipped file', f.path, e);
       }
     }
 
-    // 3) Verbliebene Waisen als fehlend markieren
+    // 3) mark the remaining orphans as missing
     orphanRecords.forEach((r) => { r.missing = true; });
 
     App.Store.save();
@@ -157,13 +157,13 @@ App.Library = (function () {
     };
   }
 
-  /* ── Import mit Autoren-Sortierung ── */
+  /* ── Import, filed by author ── */
 
   async function importFiles(fileList) {
     const files = [...fileList].filter((f) => /\.(epub|pdf)$/i.test(f.name));
     if (!files.length) return;
 
-    // Fallback-Modus: Datei nur öffnen, nicht kopieren
+    // fallback mode: just open the file, do not copy it
     if (App.Store.isFallback()) {
       await openSingleFile(files[0]);
       return;
@@ -201,7 +201,7 @@ App.Library = (function () {
         imported += 1;
         render();
       } catch (e) {
-        console.error('Import fehlgeschlagen', file.name, e);
+        console.error('Import failed', file.name, e);
         App.Utils.toast(App.I18n.t('library.importFailed', { name: file.name }), 'error');
       }
     }
@@ -222,7 +222,7 @@ App.Library = (function () {
     if (progressToast) { progressToast.remove(); progressToast = null; }
   }
 
-  /* Fallback: einzelne Datei ohne Bibliothek öffnen */
+  /* Fallback: open a single file without a library */
   async function openSingleFile(file) {
     const format = await App.Meta.detectFormat(file);
     if (!format) {
@@ -242,7 +242,7 @@ App.Library = (function () {
     App.openReader(rec, file);
   }
 
-  /* ── Buch öffnen / löschen ── */
+  /* ── Open / delete a book ── */
 
   async function openBook(id) {
     const rec = App.Store.getBook(id);
@@ -281,7 +281,7 @@ App.Library = (function () {
     );
     if (!ok) return;
     if (rec.path && !App.Store.isFallback() && !rec.missing) {
-      try { await App.FS.deleteFile(rec.path); } catch (e) { console.warn('Datei-Löschung fehlgeschlagen', e); }
+      try { await App.FS.deleteFile(rec.path); } catch (e) { console.warn('Could not delete file', e); }
     }
     await App.DB.del('covers', id);
     await App.DB.del('locations', id);
@@ -292,7 +292,7 @@ App.Library = (function () {
     App.Utils.toast(App.I18n.t('library.deleted', { title: rec.title }));
   }
 
-  /* ── Details-Dialog ── */
+  /* ── Details dialog ── */
 
   let detailsBookId = null;
 
@@ -339,7 +339,7 @@ App.Library = (function () {
     if (newTitle) rec.title = newTitle;
     rec.author = newAuthor || null;
 
-    // Autor geändert → Datei in neuen Autorenordner verschieben
+    // author changed → move the file into the new author folder
     if (rec.path && !App.Store.isFallback() && !App.Store.isReadonly() && !rec.missing) {
       const targetFolder = App.Utils.sanitizeName(newAuthor || App.I18n.t('library.unknownAuthor')) || 'Unknown Author';
       if (targetFolder !== rec.authorFolder) {
@@ -348,7 +348,7 @@ App.Library = (function () {
           rec.authorFolder = targetFolder;
           App.Utils.toast(App.I18n.t('details.moved', { author: targetFolder }));
         } catch (e) {
-          console.error('Verschieben fehlgeschlagen', e);
+          console.error('Move failed', e);
         }
       }
     }
@@ -442,7 +442,7 @@ App.Library = (function () {
         coverUrls.set(id, url);
         return url;
       }
-    } catch (e) { /* egal */ }
+    } catch (e) { /* ignore */ }
     return null;
   }
 
@@ -513,7 +513,7 @@ App.Library = (function () {
 
       gridEl.appendChild(el);
 
-      // Cover asynchron nachladen
+      // load covers asynchronously
       getCoverUrl(rec.id).then((url) => {
         if (!url) return;
         const coverEl = el.querySelector('.cover');
@@ -577,7 +577,7 @@ App.Library = (function () {
       $('sidebar').classList.toggle('collapsed');
     });
 
-    // Details-Dialog
+    // details dialog
     $('details-save').addEventListener('click', saveDetails);
     $('details-cancel').addEventListener('click', () => $('dialog-details').close());
     $('details-delete').addEventListener('click', async () => {

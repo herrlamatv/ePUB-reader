@@ -1,4 +1,4 @@
-/* App.DB – schlanker IndexedDB-Wrapper (nur Cache: Handles, Cover, Datenspiegel, Locations) */
+/* App.DB – thin IndexedDB wrapper (cache only: handles, covers, data mirror, locations) */
 window.App = window.App || {};
 
 App.DB = (function () {

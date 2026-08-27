@@ -1,11 +1,11 @@
-/* App.PdfReader – pdf.js-Integration: virtualisierte Seiten, Text-Layer, Zoom, Outline */
+/* App.PdfReader – pdf.js integration: virtualized pages, text layer, zoom, outline */
 window.App = window.App || {};
 
 App.PdfReader = (function () {
   'use strict';
 
   const $ = (id) => document.getElementById(id);
-  const MAX_CANVAS_PIXELS = 16 * 1024 * 1024; // Backing-Store-Limit pro Seite
+  const MAX_CANVAS_PIXELS = 16 * 1024 * 1024; // backing store limit per page
 
   let pdf = null;
   let record = null;
@@ -15,7 +15,7 @@ App.PdfReader = (function () {
   let zoomMode = 'fit-width'; // fit-width | fit-page | custom
   let currentPage = 1;
   let pageEls = [];
-  let baseSizes = {};        // pageNum → { width, height } bei Scale 1
+  let baseSizes = {};        // pageNum → { width, height } at scale 1
   let page1Base = null;
   let observer = null;
   let renderTasks = new Map();
@@ -122,7 +122,7 @@ App.PdfReader = (function () {
       sizeWrapper(el, pageNum);
       el.style.setProperty('--scale-factor', String(scale));
 
-      // HiDPI-Canvas mit Pixel-Obergrenze
+      // HiDPI canvas with an upper pixel bound
       let dpr = window.devicePixelRatio || 1;
       while (dpr > 1 && viewport.width * viewport.height * dpr * dpr > MAX_CANVAS_PIXELS) {
         dpr = Math.max(1, dpr - 0.25);
@@ -150,7 +150,7 @@ App.PdfReader = (function () {
           textDivs: []
         });
       } catch (e) {
-        console.warn('Text-Layer fehlgeschlagen', pageNum, e);
+        console.warn('Text layer failed', pageNum, e);
       }
 
       const hlLayer = document.createElement('div');
@@ -162,14 +162,14 @@ App.PdfReader = (function () {
       cleanupFarPages();
     } catch (e) {
       if (!(e && e.name === 'RenderingCancelledException')) {
-        console.warn('Seite konnte nicht gerendert werden', pageNum, e);
+        console.warn('Page could not be rendered', pageNum, e);
       }
     } finally {
       renderTasks.delete(pageNum);
     }
   }
 
-  /* Weit entfernte Seiten wieder freigeben (Speicher) */
+  /* Release pages that are far off screen (memory) */
   function cleanupFarPages() {
     renderedScale.forEach((_, pageNum) => {
       if (Math.abs(pageNum - currentPage) > 6) {
@@ -185,7 +185,7 @@ App.PdfReader = (function () {
     computeScale();
     renderedScale.clear();
     for (let i = 1; i <= numPages; i++) sizeWrapper(pageEls[i], i);
-    setupObserver(); // löst Initial-Callbacks für sichtbare Seiten aus
+    setupObserver(); // fires the initial callbacks for visible pages
     goToPage(keepPage, true);
     updateZoomLabel();
   }
@@ -213,7 +213,7 @@ App.PdfReader = (function () {
     if (zoomMode !== 'custom') relayout();
   }, 200);
 
-  /* ── Navigation & Fortschritt ── */
+  /* ── Navigation & progress ── */
 
   function onScroll() {
     if (scrollRaf) return;
@@ -275,7 +275,7 @@ App.PdfReader = (function () {
 
   async function loadOutline() {
     let outline = [];
-    try { outline = (await pdf.getOutline()) || []; } catch (e) { /* egal */ }
+    try { outline = (await pdf.getOutline()) || []; } catch (e) { /* ignore */ }
     const list = $('toc-list');
     list.innerHTML = '';
     const flat = [];
@@ -310,11 +310,11 @@ App.PdfReader = (function () {
       const pageIndex = await pdf.getPageIndex(d[0]);
       goToPage(pageIndex + 1);
     } catch (e) {
-      console.warn('Sprungziel nicht auflösbar', e);
+      console.warn('Could not resolve link target', e);
     }
   }
 
-  /* ── Interaktion ── */
+  /* ── Interaction ── */
 
   function onMouseUp() {
     setTimeout(() => App.Annotations.onPdfSelection(), 10);
@@ -366,7 +366,7 @@ App.PdfReader = (function () {
     return true;
   }
 
-  /* ── Aufräumen ── */
+  /* ── Teardown ── */
 
   function close() {
     if (observer) { observer.disconnect(); observer = null; }
@@ -379,7 +379,7 @@ App.PdfReader = (function () {
     }
     window.removeEventListener('resize', onResize);
     $('pdf-controls').hidden = true;
-    try { if (pdf) pdf.destroy(); } catch (e) { /* egal */ }
+    try { if (pdf) pdf.destroy(); } catch (e) { /* ignore */ }
     pdf = null;
     record = null;
     pageEls = [];

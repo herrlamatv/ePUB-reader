@@ -1,4 +1,4 @@
-/* App.Utils – Helfer, Event-Bus, Icons, Toasts, Confirm-Dialog */
+/* App.Utils – helpers, event bus, icons, toasts, confirm dialog */
 window.App = window.App || {};
 
 App.Icons = {
@@ -58,7 +58,7 @@ App.Utils = (function () {
 
   function emit(event, ...args) {
     (listeners[event] || []).forEach((fn) => {
-      try { fn(...args); } catch (e) { console.error('Event-Handler-Fehler', event, e); }
+      try { fn(...args); } catch (e) { console.error('Event handler error', event, e); }
     });
   }
 
@@ -91,7 +91,7 @@ App.Utils = (function () {
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  /* Windows-sichere Ordner-/Dateinamen */
+  /* Folder and file names that are safe on Windows */
   function sanitizeName(name) {
     let s = String(name || '').normalize('NFC')
       .replace(/[<>:"/\\|?*\u0000-\u001F]/g, ' ')
@@ -102,7 +102,7 @@ App.Utils = (function () {
     return s;
   }
 
-  /* Fingerprint: SHA-256 der ersten 512 KiB + Dateigröße */
+  /* Fingerprint: SHA-256 of the first 512 KiB plus the file size */
   async function fingerprint(file) {
     const head = await file.slice(0, 524288).arrayBuffer();
     const hash = await crypto.subtle.digest('SHA-256', head);
@@ -138,7 +138,7 @@ App.Utils = (function () {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
-  /* Farbverlauf für Fallback-Cover, deterministisch aus dem Titel */
+  /* Gradient for fallback covers, derived from the title */
   function coverGradient(title) {
     let h = 0;
     for (const c of String(title || '?')) h = (h * 31 + c.charCodeAt(0)) % 360;
@@ -159,7 +159,7 @@ App.Utils = (function () {
     }, type === 'error' ? 5000 : 3000);
   }
 
-  /* Bestätigungsdialog auf Promise-Basis */
+  /* Promise-based confirm dialog */
   function confirmDialog(message, okLabel) {
     return new Promise((resolve) => {
       const dlg = document.getElementById('dialog-confirm');
@@ -194,7 +194,7 @@ App.Utils = (function () {
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
-  /* Alle <span class="icon" data-icon="…"> mit SVG befüllen */
+  /* Fill every <span class="icon" data-icon="…"> with its SVG */
   function applyIcons(root) {
     (root || document).querySelectorAll('.icon[data-icon]').forEach((el) => {
       const icon = App.Icons[el.dataset.icon];

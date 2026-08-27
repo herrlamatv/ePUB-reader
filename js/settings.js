@@ -1,4 +1,4 @@
-/* App.Settings – Themes, Typografie, Sprache; wendet Einstellungen live auf Reader an */
+/* App.Settings – themes, typography, language; applies settings to the reader live */
 window.App = window.App || {};
 
 App.Settings = (function () {
@@ -12,7 +12,7 @@ App.Settings = (function () {
   function applyTheme(theme, persist) {
     if (!THEMES.includes(theme)) theme = 'light';
     document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem('leselampe-theme', theme); } catch (e) { /* egal */ }
+    try { localStorage.setItem('leselampe-theme', theme); } catch (e) { /* ignore */ }
     document.querySelectorAll('.theme-swatch').forEach((el) => {
       el.classList.toggle('active', el.dataset.themeValue === theme);
     });
@@ -31,9 +31,9 @@ App.Settings = (function () {
     applyTheme(next);
   }
 
-  /* ── Sprache ── */
+  /* ── Language ── */
 
-  /* Wechselt die Sprache; I18n schreibt den Cookie, data.json wird nachgezogen */
+  /* Switches the language; I18n writes the cookie, data.json follows */
   function changeLanguage(l) {
     App.I18n.setLanguage(l);
     if (App.Store.getData()) {
@@ -42,12 +42,12 @@ App.Settings = (function () {
     }
   }
 
-  /* Schließt die Sprachwahl ab; wird vom Weiter-Button bzw. Esc aufgerufen */
+  /* Finishes the language picker; called by the continue button or by Esc */
   let finishLanguageDialog = null;
 
   /**
-   * Sprachwahl beim ersten Start. Ein Klick wendet die Sprache sofort als
-   * Vorschau an, „Weiter" (oder Esc) schreibt sie in den Cookie.
+   * Language picker shown on first run. A click applies the language right
+   * away as a preview; "Continue" (or Esc) writes it to the cookie.
    */
   function askLanguage() {
     const dlg = $('dialog-language');
@@ -57,8 +57,8 @@ App.Settings = (function () {
     }
     return new Promise((resolve) => {
       finishLanguageDialog = () => {
-        finishLanguageDialog = null;    // nur einmal abschließen
-        App.I18n.confirmChoice();       // schreibt Cookie + localStorage
+        finishLanguageDialog = null;    // finish only once
+        App.I18n.confirmChoice();       // writes cookie + localStorage
         if (App.Store.getData()) {
           App.Store.settings().language = App.I18n.language();
           App.Store.save();
@@ -76,14 +76,14 @@ App.Settings = (function () {
     if (!dlg) return;
     dlg.querySelectorAll('.lang-choice').forEach((btn) => {
       btn.addEventListener('click', () => {
-        // Vorschau: noch nicht persistieren. Ohne geladene Daten kein Re-Render anstoßen.
+        // preview only: do not persist yet, and do not re-render before data is loaded
         App.I18n.setLanguage(btn.dataset.lang, {
           persist: false,
           silent: !App.Store.getData()
         });
       });
     });
-    // Direkt am Klick abschließen – auf das close-Event des <dialog> ist kein Verlass.
+    // finish on the click itself – the close event of <dialog> cannot be relied on
     $('lang-continue').addEventListener('click', () => {
       if (finishLanguageDialog) finishLanguageDialog();
     });
@@ -92,14 +92,14 @@ App.Settings = (function () {
         if (finishLanguageDialog) finishLanguageDialog();
       });
     });
-    // Esc zusätzlich direkt abfangen, damit der Start nie an einem
-    // ausbleibenden close-Event hängen bleibt
+    // catch Esc directly as well, so startup never hangs on a close
+    // event that fails to arrive
     dlg.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && finishLanguageDialog) finishLanguageDialog();
     });
   }
 
-  /* ── EPUB-Typografie (mit Buch-Override) ── */
+  /* ── EPUB typography (with a per-book override) ── */
 
   function epubSettings() {
     const base = Object.assign({}, App.Store.settings().epub);
@@ -111,7 +111,7 @@ App.Settings = (function () {
   function setEpubSetting(key, value) {
     const book = App.state && App.state.currentBook;
     if (book && book.format === 'epub' && key === 'fontSize') {
-      // Schriftgröße pro Buch merken, Rest global
+      // font size is kept per book, everything else globally
       book.settingsOverride = book.settingsOverride || {};
       book.settingsOverride[key] = value;
     } else {
@@ -131,13 +131,13 @@ App.Settings = (function () {
     $('epub-flow').value = s.flow;
   }
 
-  /* ── Aus Store anwenden (nach Laden) ── */
+  /* ── Apply from the store (after loading) ── */
 
   function applyFromStore() {
     const s = App.Store.settings();
     applyTheme(s.theme, false);
     if (App.I18n.hasStoredPreference()) {
-      // Der Cookie ist führend – data.json nachziehen, falls es abweicht
+      // the cookie leads – bring data.json in line if it differs
       if (s.language !== App.I18n.language()) {
         s.language = App.I18n.language();
         App.Store.save();
@@ -154,9 +154,9 @@ App.Settings = (function () {
   /* ── Bindings ── */
 
   function init() {
-    // Früh: Theme/Sprache aus localStorage, bevor der Store geladen ist (kein Flackern)
+    // early: theme and language from localStorage, before the store loads (no flicker)
     let earlyTheme = 'light';
-    try { earlyTheme = localStorage.getItem('leselampe-theme') || 'light'; } catch (e) { /* egal */ }
+    try { earlyTheme = localStorage.getItem('leselampe-theme') || 'light'; } catch (e) { /* ignore */ }
     document.documentElement.dataset.theme = earlyTheme;
 
     $('theme-picker').addEventListener('click', (ev) => {
@@ -172,7 +172,7 @@ App.Settings = (function () {
     $('setting-language').addEventListener('change', (ev) => changeLanguage(ev.target.value));
     bindLanguageDialog();
 
-    // Typografie-Stepper
+    // typography steppers
     const step = (key, delta, min, max, round) => {
       const s = epubSettings();
       let v = App.Utils.clamp((s[key] || 0) + delta, min, max);

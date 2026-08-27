@@ -1,9 +1,9 @@
-/* App – Bootstrap, View-Wechsel, Drawer-Verwaltung, Auto-Hide-Chrome, Drag&Drop */
+/* App – bootstrap, view switching, drawers, auto-hiding chrome, drag & drop */
 window.App = window.App || {};
 
 App.state = {
   view: 'library',       // 'library' | 'reader'
-  currentBook: null      // Buch-Record aus dem Store
+  currentBook: null      // book record from the store
 };
 
 (function () {
@@ -15,7 +15,7 @@ App.state = {
   let chromeTimer = null;
   let dragCounter = 0;
 
-  /* ══════════ Reader öffnen/schließen ══════════ */
+  /* ══════════ Open / close the reader ══════════ */
 
   App.openReader = async function (rec, file) {
     App.state.view = 'reader';
@@ -34,7 +34,7 @@ App.state = {
         await App.PdfReader.open(rec, file);
       }
     } catch (e) {
-      console.error('Buch öffnen fehlgeschlagen', e);
+      console.error('Failed to open book', e);
       App.Utils.toast(App.I18n.t('reader.openError', { error: e.message || e }), 'error');
       App.closeReader();
       return;
@@ -94,7 +94,7 @@ App.state = {
     return DRAWERS.some((d) => !$(d).hidden);
   };
 
-  /* ══════════ Auto-Hide-Chrome im Reader ══════════ */
+  /* ══════════ Auto-hiding chrome in the reader ══════════ */
 
   function showChrome() {
     $('reader-topbar').classList.remove('hidden-chrome');
@@ -154,7 +154,7 @@ App.state = {
     });
   }
 
-  /* ══════════ UI-Bindings ══════════ */
+  /* ══════════ UI bindings ══════════ */
 
   function bindUI() {
     $('btn-back').addEventListener('click', App.closeReader);
@@ -173,7 +173,7 @@ App.state = {
       btn.addEventListener('click', () => btn.closest('dialog').close());
     });
 
-    // Tabs im Anmerkungen-Drawer
+    // tabs in the annotations drawer
     document.querySelectorAll('.drawer-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.drawer-tab').forEach((el) => el.classList.remove('active'));
@@ -185,14 +185,14 @@ App.state = {
 
     $('btn-stats').addEventListener('click', () => App.Stats.showDialog());
 
-    // EPUB-Steuerung
+    // EPUB controls
     $('progress-slider').addEventListener('input', (ev) => {
       App.EpubReader.goToPercentage(Number(ev.target.value) / 1000);
     });
     $('tap-left').addEventListener('click', () => App.EpubReader.prev());
     $('tap-right').addEventListener('click', () => App.EpubReader.next());
 
-    // PDF-Steuerung
+    // PDF controls
     $('pdf-page-input').addEventListener('change', (ev) => {
       App.PdfReader.goToPage(Number(ev.target.value));
     });
@@ -203,7 +203,7 @@ App.state = {
     $('btn-zoom-out').addEventListener('click', () => App.PdfReader.zoomOut());
     $('btn-zoom-mode').addEventListener('click', () => App.PdfReader.cycleZoomMode());
 
-    // Chrome-Auto-Hide
+    // chrome auto-hide
     $('view-reader').addEventListener('pointermove', () => {
       if ($('reader-topbar').classList.contains('hidden-chrome')) showChrome();
       else scheduleHide();
@@ -211,7 +211,7 @@ App.state = {
 
     bindDragDrop();
 
-    // Daten sichern, wenn der Tab in den Hintergrund geht oder schließt
+    // save when the tab goes into the background or closes
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) App.Store.saveNow();
     });
@@ -237,7 +237,7 @@ App.state = {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
     }
 
-    // Erster Start: Sprache abfragen, bevor die Oberfläche gefüllt wird
+    // first run: ask for the language before the UI is filled
     if (!App.I18n.hasStoredPreference()) {
       await App.Settings.askLanguage();
     }

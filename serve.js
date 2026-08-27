@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /*
- * Minimaler statischer Webserver ohne Abhängigkeiten.
- * Start:  npm start   (oder: node serve.js)
- * Danach: http://localhost:8420 im Browser öffnen (Chrome/Edge empfohlen).
+ * Minimal static web server, no dependencies.
+ * Run:  npm start   (or: node serve.js)
+ * Then open http://localhost:8420 in a browser (Chrome or Edge recommended).
  */
 'use strict';
 
@@ -36,7 +36,7 @@ const server = http.createServer((req, res) => {
   const relPath = urlPath === '/' ? 'index.html' : urlPath.slice(1);
   const filePath = path.join(ROOT, relPath);
 
-  // Pfad-Traversal verhindern
+  // prevent path traversal
   if (!filePath.startsWith(ROOT)) {
     res.writeHead(403).end('Forbidden');
     return;
@@ -56,6 +56,6 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Leselampe läuft auf  http://localhost:${PORT}`);
-  console.log('Beenden mit Strg+C');
+  console.log(`ePUB-reader running at  http://localhost:${PORT}`);
+  console.log('Stop with Ctrl+C');
 });

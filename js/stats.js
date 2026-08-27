@@ -1,4 +1,4 @@
-/* App.Stats – Lesezeit-Erfassung per Heartbeat + Statistik-Dialog */
+/* App.Stats – reading time tracked by heartbeat, plus the stats dialog */
 window.App = window.App || {};
 
 App.Stats = (function () {
@@ -90,7 +90,7 @@ App.Stats = (function () {
     $('stat-total').textContent = fmt(total);
     $('stat-streak').textContent = t('stats.days', { n: data.stats.streak.current || 0 });
 
-    // Balken der letzten 30 Tage
+    // bars for the last 30 days
     const chart = $('stats-chart');
     chart.innerHTML = '';
     const range = lastNDays(30);
@@ -106,7 +106,7 @@ App.Stats = (function () {
       chart.appendChild(bar);
     });
 
-    // Zeit pro Buch
+    // time per book
     const perBook = {};
     Object.values(days).forEach((d) => {
       Object.keys(d.perBook || {}).forEach((id) => {

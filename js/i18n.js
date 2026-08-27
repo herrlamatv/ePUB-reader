@@ -1,4 +1,4 @@
-/* App.I18n – Übersetzungen als reine JS-Objekte (funktioniert auch ohne fetch/Server) */
+/* App.I18n – translations as plain JS objects (works without fetch or a server) */
 window.App = window.App || {};
 
 App.I18N = {
@@ -159,6 +159,7 @@ App.I18N = {
     'app.dataSaveError': 'Speichern der Bibliotheksdaten fehlgeschlagen.',
     'app.dataRestored': 'Daten aus Sicherung wiederhergestellt.',
     'app.dataCorrupt': 'Die Bibliotheksdaten sind beschädigt. Aus Sicherung wiederherstellen?',
+    'app.name': 'Leselampe',
     'app.title': 'Leselampe – EPUB- & PDF-Reader',
 
     'welcome.title': 'Sprache wählen',
@@ -196,7 +197,7 @@ App.I18N = {
     'library.permissionNeeded': 'Access to your library folder needs to be granted again.',
     'library.permissionGrant': 'Grant access',
     'library.permissionDenied': 'Access denied – library is read-only.',
-    'library.emptyTitle': 'Welcome to Leselampe',
+    'library.emptyTitle': 'Welcome to ePUB-reader',
     'library.emptyText': 'Choose a folder on your computer as your library. Imported books are automatically organized into author folders there.',
     'library.pickFolder': 'Choose library folder',
     'library.fallbackNote': 'Your browser does not support folder access (File System Access API). Use Chrome or Edge for the full library experience – alternatively you can open single files:',
@@ -323,10 +324,11 @@ App.I18N = {
     'app.dataSaveError': 'Failed to save library data.',
     'app.dataRestored': 'Data restored from backup.',
     'app.dataCorrupt': 'Library data is corrupted. Restore from backup?',
-    'app.title': 'Leselampe – EPUB & PDF reader',
+    'app.name': 'ePUB-reader',
+    'app.title': 'ePUB-reader',
 
     'welcome.title': 'Choose your language',
-    'welcome.subtitle': 'Which language would you like to use Leselampe in? You can change the language at any time in the settings.',
+    'welcome.subtitle': 'Which language would you like to use ePUB-reader in? You can change the language at any time in the settings.',
     'welcome.continue': 'Continue'
   }
 };
@@ -338,12 +340,12 @@ App.I18n = (function () {
   const FALLBACK = 'de';
   const COOKIE_KEY = 'leselampe_lang';
   const COOKIE_DAYS = 365;
-  const STORAGE_KEY = 'leselampe-lang'; // Notnagel, wenn Cookies blockiert sind (z. B. file://)
+  const STORAGE_KEY = 'leselampe-lang'; // last resort when cookies are blocked (file://, for instance)
 
   let lang = FALLBACK;
-  let chosen = false; // true, sobald eine Sprache bewusst gewählt und gespeichert wurde
+  let chosen = false; // true once a language has been picked and stored
 
-  /* ══════════ Persistenz: Cookie (führend) + localStorage ══════════ */
+  /* ══════════ Persistence: cookie (leading) plus localStorage ══════════ */
 
   function readCookie(name) {
     const parts = (document.cookie || '').split(';');
@@ -364,8 +366,8 @@ App.I18n = (function () {
   }
 
   function persist(l) {
-    try { writeCookie(COOKIE_KEY, l, COOKIE_DAYS); } catch (e) { /* egal */ }
-    try { localStorage.setItem(STORAGE_KEY, l); } catch (e) { /* egal */ }
+    try { writeCookie(COOKIE_KEY, l, COOKIE_DAYS); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, l); } catch (e) { /* ignore */ }
   }
 
   function readPersisted() {
@@ -376,7 +378,7 @@ App.I18n = (function () {
     return SUPPORTED.indexOf(v) >= 0 ? v : null;
   }
 
-  /* Browsersprache als Vorauswahl für den Startdialog */
+  /* Browser language, used to preselect in the first-run dialog */
   function detect() {
     const cands = (navigator.languages && navigator.languages.length)
       ? navigator.languages
@@ -388,7 +390,7 @@ App.I18n = (function () {
     return FALLBACK;
   }
 
-  /* ══════════ Übersetzen ══════════ */
+  /* ══════════ Translating ══════════ */
 
   function t(key, params) {
     const dict = App.I18N[lang] || App.I18N[FALLBACK];
@@ -407,16 +409,16 @@ App.I18n = (function () {
 
   function supported() { return SUPPORTED.slice(); }
 
-  /* Wurde schon einmal bewusst eine Sprache gewählt? Steuert die Abfrage beim ersten Start. */
+  /* Has a language been picked before? Drives the prompt on first run. */
   function hasStoredPreference() { return chosen; }
 
-  /* Aktuell angezeigte Sprache festschreiben (Bestätigung im Startdialog) */
+  /* Commit the language currently on screen (confirmed in the first-run dialog) */
   function confirmChoice() {
     persist(lang);
     chosen = true;
   }
 
-  /* Alle data-i18n / data-i18n-title / data-i18n-placeholder im DOM aktualisieren */
+  /* Update every data-i18n / data-i18n-title / data-i18n-placeholder in the DOM */
   function applyToDom(root) {
     const scope = root || document;
     scope.querySelectorAll('[data-i18n]').forEach((el) => {
@@ -431,7 +433,7 @@ App.I18n = (function () {
     if (!root) document.title = t('app.title');
   }
 
-  /* Alle Sprachschalter der Oberfläche auf den aktuellen Stand bringen */
+  /* Bring every language switch in the UI up to date */
   function syncControls() {
     document.querySelectorAll('.lang-btn').forEach((el) => {
       el.textContent = lang.toUpperCase();
@@ -446,9 +448,9 @@ App.I18n = (function () {
   }
 
   /**
-   * Sprache umschalten.
-   * opts.silent  – kein 'lang:changed'-Event (beim Init)
-   * opts.persist – false: nur anzeigen, noch nicht im Cookie speichern (Vorschau im Startdialog)
+   * Switch language.
+   * opts.silent  – no 'lang:changed' event (used during init)
+   * opts.persist – false: only display it, do not write the cookie yet (first-run preview)
    */
   function setLanguage(newLang, opts) {
     if (SUPPORTED.indexOf(newLang) < 0) return;
@@ -465,9 +467,9 @@ App.I18n = (function () {
   }
 
   /**
-   * Start: gespeicherte Sprache anwenden (Cookie → localStorage).
-   * Ohne gespeicherte Sprache wird die Browsersprache nur vorgeblendet –
-   * geschrieben wird erst, wenn der Nutzer im Startdialog bestätigt.
+   * Startup: apply the stored language (cookie → localStorage).
+   * With nothing stored the browser language is only previewed; it is
+   * written once the user confirms in the first-run dialog.
    */
   function init(preferred) {
     const stored = SUPPORTED.indexOf(preferred) >= 0 ? preferred : readPersisted();

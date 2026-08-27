@@ -1,4 +1,4 @@
-# Leselampe
+# ePUB-reader
 
 A browser-based EPUB and PDF reader. Plain HTML, CSS and JS, no build step, no backend.
 Your library is a normal folder on disk and imported books are filed under the author's name.
@@ -22,7 +22,7 @@ Library/
 │   └── Der Zauberberg.epub
 ├── Anna Autorin/
 │   └── Example.pdf
-└── .leselampe/
+└── .lamaepubreader/
     ├── data.json          progress, bookmarks, highlights, stats, settings
     └── data.backup.json   daily backup
 ```
@@ -41,8 +41,8 @@ thumbnails are cached in IndexedDB and regenerated when missing.
 - Read aloud through the Web Speech API
 - Stats: time per day and per book, 30 day chart, streak
 - Light, sepia and dark theme; font size, family, line height, margins
-- German and English, switchable from the topbar or the settings, stored in the
-  `leselampe_lang` cookie
+- English and German, switchable from the topbar or the settings, stored in the
+  `leselampe_lang` cookie. In German the app is called Leselampe
 - Renamed or moved files are matched by fingerprint, so progress and notes survive
 
 ## Browsers

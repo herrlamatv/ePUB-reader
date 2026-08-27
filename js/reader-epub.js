@@ -1,4 +1,4 @@
-/* App.EpubReader – epub.js-Integration: Rendering, TOC, Fortschritt, Themes, TTS-Anbindung */
+/* App.EpubReader – epub.js integration: rendering, TOC, progress, themes, TTS hooks */
 window.App = window.App || {};
 
 App.EpubReader = (function () {
@@ -59,7 +59,7 @@ App.EpubReader = (function () {
     registerThemes();
     applyTypography();
 
-    // Stylesheet für TTS-Hervorhebung in jeden Abschnitt injizieren
+    // inject the TTS highlight stylesheet into every section
     rendition.hooks.content.register((contents) => {
       const style = contents.document.createElement('style');
       style.textContent = '.leselampe-tts-active { background: rgba(59,130,246,0.18); border-radius: 3px; }';
@@ -92,18 +92,18 @@ App.EpubReader = (function () {
     rendition.themes.override('line-height', String(s.lineHeight));
     const viewport = $('epub-viewport');
     viewport.style.padding = `0 ${s.marginH}px`;
-    try { rendition.resize(); } catch (e) { /* Layout folgt beim nächsten Anzeigen */ }
+    try { rendition.resize(); } catch (e) { /* layout follows on next display */ }
   }
 
   function applyTheme(themeName) {
     if (rendition) rendition.themes.select(themeName);
   }
 
-  /* Flow-Wechsel (Seiten ↔ Fortlaufend) erfordert neue Rendition */
+  /* Switching flow (paged ↔ scrolled) needs a fresh rendition */
   async function reflow() {
     if (!book || !rendition) return;
     const cfi = currentLocation && currentLocation.start ? currentLocation.start.cfi : record.progress.cfi;
-    try { rendition.destroy(); } catch (e) { /* egal */ }
+    try { rendition.destroy(); } catch (e) { /* ignore */ }
     $('epub-viewport').innerHTML = '';
     createRendition();
     await rendition.display(cfi || undefined);
@@ -121,7 +121,7 @@ App.EpubReader = (function () {
     }
   }
 
-  /* ── Position & Fortschritt ── */
+  /* ── Position & progress ── */
 
   function onRelocated(location) {
     currentLocation = location;
@@ -130,7 +130,7 @@ App.EpubReader = (function () {
     record.progress.cfi = cfi;
     let pct = location.start.percentage || 0;
     if (locationsReady) {
-      try { pct = book.locations.percentageFromCfi(cfi) || 0; } catch (e) { /* egal */ }
+      try { pct = book.locations.percentageFromCfi(cfi) || 0; } catch (e) { /* ignore */ }
     }
     record.progress.percentage = pct;
     App.Store.save();
@@ -153,14 +153,14 @@ App.EpubReader = (function () {
         App.DB.set('locations', record.id, book.locations.save());
       }
       locationsReady = true;
-      // Geschätzte Seitenzahl aus dem Textumfang (1 Location = 1000 Zeichen, ~1800 Zeichen/Seite)
+      // page count estimated from the text volume (1 location = 1000 chars, ~1800 chars per page)
       if (book.locations.total > 0) {
         record.pageCount = Math.max(1, Math.round((book.locations.total * 1000) / 1800));
         App.Store.save();
       }
       if (currentLocation) onRelocated(currentLocation);
     } catch (e) {
-      console.warn('Locations fehlgeschlagen', e);
+      console.warn('Generating locations failed', e);
     }
   }
 
@@ -169,7 +169,7 @@ App.EpubReader = (function () {
     try {
       const cfi = book.locations.cfiFromPercentage(App.Utils.clamp(p, 0, 1));
       if (cfi) rendition.display(cfi);
-    } catch (e) { /* egal */ }
+    } catch (e) { /* ignore */ }
   }
 
   function display(target) {
@@ -232,13 +232,13 @@ App.EpubReader = (function () {
     });
   }
 
-  /* ── Interaktion ── */
+  /* ── Interaction ── */
 
   function onContentClick() {
     const contents = rendition.getContents()[0];
     if (contents) {
       const sel = contents.window.getSelection();
-      if (sel && !sel.isCollapsed) return; // Auswahl aktiv → nicht togglen
+      if (sel && !sel.isCollapsed) return; // a selection is active → do not toggle
     }
     if (App.Annotations.popupVisible()) {
       App.Annotations.hidePopups();
@@ -261,16 +261,16 @@ App.EpubReader = (function () {
         { fill: colors[h.color] || colors.yellow, 'fill-opacity': '0.4', 'mix-blend-mode': 'multiply' }
       );
     } catch (e) {
-      console.warn('Highlight nicht anwendbar', h.cfiRange, e);
+      console.warn('Highlight could not be applied', h.cfiRange, e);
     }
   }
 
   function removeHighlightFromRendition(h) {
     if (!rendition) return;
-    try { rendition.annotations.remove(h.cfiRange, 'highlight'); } catch (e) { /* egal */ }
+    try { rendition.annotations.remove(h.cfiRange, 'highlight'); } catch (e) { /* ignore */ }
   }
 
-  /* ── Zustand / Zugriff ── */
+  /* ── State / access ── */
 
   function getBook() { return book; }
   function getRendition() { return rendition; }
@@ -313,7 +313,7 @@ App.EpubReader = (function () {
           }
         }
       }
-    } catch (e) { /* ab Abschnittsanfang lesen */ }
+    } catch (e) { /* read from the start of the section */ }
     return all.slice(startIdx).map((el) => ({ text: el.textContent.trim(), el }));
   }
 
@@ -322,16 +322,16 @@ App.EpubReader = (function () {
     const loc = currentLocation;
     await rendition.next();
     await new Promise((r) => setTimeout(r, 250));
-    // Am Buchende ändert sich die Position nicht mehr
+    // at the end of the book the position stops changing
     if (loc && currentLocation && loc.start.cfi === currentLocation.start.cfi) return false;
     return true;
   }
 
-  /* ── Aufräumen ── */
+  /* ── Teardown ── */
 
   function close() {
-    try { if (rendition) rendition.destroy(); } catch (e) { /* egal */ }
-    try { if (book) book.destroy(); } catch (e) { /* egal */ }
+    try { if (rendition) rendition.destroy(); } catch (e) { /* ignore */ }
+    try { if (book) book.destroy(); } catch (e) { /* ignore */ }
     rendition = null;
     book = null;
     record = null;

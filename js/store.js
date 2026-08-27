@@ -1,4 +1,4 @@
-/* App.Store – data.json im Bibliotheksordner (Quelle der Wahrheit) + Cache-Spiegel */
+/* App.Store – data.json in the library folder (source of truth) plus cache mirror */
 window.App = window.App || {};
 
 App.Store = (function () {
@@ -8,8 +8,8 @@ App.Store = (function () {
   const BACKUP = 'data.backup.json';
 
   let data = null;
-  let readonly = false;      // true, solange keine Schreibfreigabe existiert
-  let fallbackMode = false;  // true ohne File System Access API (localStorage statt Datei)
+  let readonly = false;      // true while there is no write permission
+  let fallbackMode = false;  // true without the File System Access API (localStorage instead of a file)
   let bc = null;
   let suppressBroadcast = false;
 
@@ -45,7 +45,7 @@ App.Store = (function () {
     return out;
   }
 
-  /* ── Laden ── */
+  /* ── Loading ── */
 
   async function load() {
     fallbackMode = false;
@@ -55,7 +55,7 @@ App.Store = (function () {
       try {
         data = mergeDefaults(JSON.parse(text));
       } catch (e) {
-        console.error('data.json beschädigt', e);
+        console.error('data.json is corrupted', e);
         data = await tryRestoreBackup();
       }
     } else {
@@ -77,7 +77,7 @@ App.Store = (function () {
           App.Utils.toast(App.I18n.t('app.dataRestored'));
           return restored;
         } catch (e) {
-          console.error('Backup ebenfalls beschädigt', e);
+          console.error('Backup is corrupted too', e);
         }
       }
     }
@@ -93,11 +93,11 @@ App.Store = (function () {
         localStorage.setItem('leselampe-backup-day', today);
       }
     } catch (e) {
-      console.warn('Backup fehlgeschlagen', e);
+      console.warn('Backup failed', e);
     }
   }
 
-  /* Read-only-Start aus dem IndexedDB-Spiegel (vor erneuter Freigabe) */
+  /* Read-only start from the IndexedDB mirror (before permission is granted again) */
   async function loadFromCache() {
     const cached = await App.DB.get('dataCache', 'data');
     data = mergeDefaults(cached);
@@ -105,7 +105,7 @@ App.Store = (function () {
     return data;
   }
 
-  /* Fallback ohne File System Access API: localStorage */
+  /* Fallback without the File System Access API: localStorage */
   function loadFallback() {
     fallbackMode = true;
     try {
@@ -116,7 +116,7 @@ App.Store = (function () {
     return data;
   }
 
-  /* ── Speichern ── */
+  /* ── Saving ── */
 
   async function persist() {
     if (!data) return;
@@ -131,7 +131,7 @@ App.Store = (function () {
       await App.DB.set('dataCache', 'data', data);
       if (bc && !suppressBroadcast) bc.postMessage({ type: 'updated', revision: data.revision });
     } catch (e) {
-      console.error('Speichern fehlgeschlagen', e);
+      console.error('Saving failed', e);
       App.Utils.toast(App.I18n.t('app.dataSaveError'), 'error');
     }
   }
@@ -151,7 +151,7 @@ App.Store = (function () {
     bc.onmessage = async (ev) => {
       if (!ev.data || ev.data.type !== 'updated') return;
       if (data && ev.data.revision > data.revision) {
-        // Anderer Tab hat gespeichert → neu laden, eigene ungesicherte Statistik behalten
+        // another tab saved → reload, but keep our own unsaved stats
         const myStats = data.stats;
         const text = await App.FS.readDataFile(FILE);
         if (text) {
@@ -161,7 +161,7 @@ App.Store = (function () {
             mergeStats(fresh.stats, myStats);
             data = fresh;
             App.Utils.emit('store:reloaded');
-          } catch (e) { /* behalten was wir haben */ }
+          } catch (e) { /* keep what we have */ }
           suppressBroadcast = false;
         }
       }
@@ -183,7 +183,7 @@ App.Store = (function () {
     });
   }
 
-  /* ── Zugriff ── */
+  /* ── Access ── */
 
   function getData() { return data; }
   function settings() { return data.settings; }

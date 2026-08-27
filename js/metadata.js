@@ -1,4 +1,4 @@
-/* App.Meta – Formaterkennung, Metadaten- und Cover-Extraktion für EPUB & PDF */
+/* App.Meta – format detection, metadata and cover extraction for EPUB & PDF */
 window.App = window.App || {};
 
 App.Meta = (function () {
@@ -7,7 +7,7 @@ App.Meta = (function () {
   const JUNK_AUTHORS = /^(microsoft|adobe|word|writer|openoffice|libreoffice|acrobat|pdfcreator|calibre|unknown|scan|canon|hp |epson)/i;
   const THUMB_WIDTH = 300;
 
-  /* Format anhand Endung + Magic Bytes bestimmen; null wenn unbekannt */
+  /* Determine the format from extension plus magic bytes; null when unknown */
   async function detectFormat(file) {
     const name = file.name.toLowerCase();
     const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
@@ -20,7 +20,7 @@ App.Meta = (function () {
     return null;
   }
 
-  /* "Autor - Titel.epub" → { author, title } */
+  /* "Author - Title.epub" → { author, title } */
   function parseFilename(fileName) {
     const base = fileName.replace(/\.(epub|pdf)$/i, '');
     const m = base.match(/^(.+?)\s+-\s+(.+)$/);
@@ -35,7 +35,7 @@ App.Meta = (function () {
     return a;
   }
 
-  /* Bildquelle (Blob/Canvas) auf 300px-JPEG-Thumbnail verkleinern */
+  /* Shrink an image source (blob or canvas) to a 300px JPEG thumbnail */
   async function makeThumbFromBlob(blob) {
     try {
       const bitmap = await createImageBitmap(blob);
@@ -47,7 +47,7 @@ App.Meta = (function () {
       bitmap.close();
       return await canvasToJpeg(canvas);
     } catch (e) {
-      console.warn('Cover-Thumbnail fehlgeschlagen', e);
+      console.warn('Cover thumbnail failed', e);
       return null;
     }
   }
@@ -56,7 +56,7 @@ App.Meta = (function () {
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.8));
   }
 
-  /* EPUB: Metadaten + Cover über epub.js (temporäre Instanz, danach destroy) */
+  /* EPUB: metadata and cover via epub.js (temporary instance, destroyed afterwards) */
   async function readEpub(file) {
     const result = { title: null, author: null, language: null, cover: null, pageCount: null };
     let book = null;
@@ -76,16 +76,16 @@ App.Meta = (function () {
           const blob = await (await fetch(coverUrl)).blob();
           result.cover = await makeThumbFromBlob(blob);
         }
-      } catch (e) { /* Cover ist optional */ }
+      } catch (e) { /* cover is optional */ }
     } catch (e) {
-      console.warn('EPUB-Metadaten fehlgeschlagen', file.name, e);
+      console.warn('EPUB metadata failed', file.name, e);
     } finally {
-      if (book) { try { book.destroy(); } catch (e) { /* egal */ } }
+      if (book) { try { book.destroy(); } catch (e) { /* ignore */ } }
     }
     return finalize(result, file);
   }
 
-  /* PDF: Metadaten + Seite 1 als Cover */
+  /* PDF: metadata plus page 1 as the cover */
   async function readPdf(file) {
     const result = { title: null, author: null, language: null, cover: null, pageCount: null };
     let pdf = null;
@@ -103,7 +103,7 @@ App.Meta = (function () {
         }
         result.author = cleanAuthor(author);
         result.title = (info.Title || '').trim() || null;
-      } catch (e) { /* Metadaten optional */ }
+      } catch (e) { /* metadata is optional */ }
       try {
         const page = await pdf.getPage(1);
         const base = page.getViewport({ scale: 1 });
@@ -113,16 +113,16 @@ App.Meta = (function () {
         canvas.height = Math.round(viewport.height);
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
         result.cover = await canvasToJpeg(canvas);
-      } catch (e) { /* Cover optional */ }
+      } catch (e) { /* cover is optional */ }
     } catch (e) {
-      console.warn('PDF-Metadaten fehlgeschlagen', file.name, e);
+      console.warn('PDF metadata failed', file.name, e);
     } finally {
-      if (pdf) { try { pdf.destroy(); } catch (e) { /* egal */ } }
+      if (pdf) { try { pdf.destroy(); } catch (e) { /* ignore */ } }
     }
     return finalize(result, file);
   }
 
-  /* Fallback-Kette: Metadaten → Dateiname "Autor - Titel" → Dateiname */
+  /* Fallback chain: metadata → "Author - Title" filename → plain filename */
   function finalize(result, file) {
     const fromName = parseFilename(file.name);
     if (!result.title) result.title = fromName.title || file.name;

@@ -1,10 +1,10 @@
-/* App.FS – File-System-Access-Schicht: Bibliotheksordner, Scan, Lesen/Schreiben */
+/* App.FS – File System Access layer: library folder, scan, read/write */
 window.App = window.App || {};
 
 App.FS = (function () {
   'use strict';
 
-  const DATA_DIR = '.leselampe';
+  const DATA_DIR = '.lamaepubreader';
   let libraryHandle = null;
 
   function supported() {
@@ -15,14 +15,14 @@ App.FS = (function () {
     return !!libraryHandle;
   }
 
-  /* Ordner-Auswahl (User-Gesture nötig) */
+  /* Folder picker (needs a user gesture) */
   async function pickLibrary() {
     libraryHandle = await window.showDirectoryPicker({ id: 'library', mode: 'readwrite' });
     await App.DB.set('handles', 'library', libraryHandle);
     return libraryHandle;
   }
 
-  /* Gespeichertes Handle wiederherstellen; Rückgabe: 'granted' | 'prompt' | null */
+  /* Restore the stored handle; returns 'granted' | 'prompt' | null */
   async function restore() {
     try {
       const handle = await App.DB.get('handles', 'library');
@@ -32,19 +32,19 @@ App.FS = (function () {
       libraryHandle = handle;
       return { handle, permission };
     } catch (e) {
-      console.warn('Handle-Wiederherstellung fehlgeschlagen', e);
+      console.warn('Could not restore folder handle', e);
       return { handle: null, permission: null };
     }
   }
 
-  /* Erneute Freigabe anfordern (braucht User-Gesture) */
+  /* Request permission again (needs a user gesture) */
   async function requestPermission() {
     if (!libraryHandle) return false;
     try {
       const result = await libraryHandle.requestPermission({ mode: 'readwrite' });
       return result === 'granted';
     } catch (e) {
-      console.warn('requestPermission fehlgeschlagen', e);
+      console.warn('requestPermission failed', e);
       return false;
     }
   }
@@ -54,7 +54,7 @@ App.FS = (function () {
     await App.DB.del('handles', 'library');
   }
 
-  /* Pfad "Autor/Titel.epub" in Verzeichnis-Handle + Dateiname auflösen */
+  /* Resolve "Author/Title.epub" into a directory handle plus file name */
   async function resolveDir(relPath, create) {
     const parts = relPath.split('/').filter(Boolean);
     const fileName = parts.pop();
@@ -71,7 +71,7 @@ App.FS = (function () {
     return fh.getFile();
   }
 
-  /* Datei schreiben (atomar: Commit erst bei close()) */
+  /* Write a file (atomic: committed on close()) */
   async function writeFile(relPath, data) {
     const { dir, fileName } = await resolveDir(relPath, true);
     const fh = await dir.getFileHandle(fileName, { create: true });
@@ -84,12 +84,12 @@ App.FS = (function () {
       await writable.write(data);
       await writable.close();
     } catch (e) {
-      try { await writable.abort(); } catch (e2) { /* bereits geschlossen */ }
+      try { await writable.abort(); } catch (e2) { /* already closed */ }
       throw e;
     }
   }
 
-  /* Import: Datei in Autorenordner ablegen, Kollisionen mit " (2)" auflösen */
+  /* Import: file goes into the author folder, clashes resolved with " (2)" */
   async function writeBookFile(authorFolder, baseName, ext, file) {
     const dir = await libraryHandle.getDirectoryHandle(authorFolder, { create: true });
     let name = baseName + ext;
@@ -100,7 +100,7 @@ App.FS = (function () {
         name = `${baseName} (${counter})${ext}`;
         counter += 1;
       } catch (e) {
-        break; // Name ist frei
+        break; // name is free
       }
     }
     const fh = await dir.getFileHandle(name, { create: true });
@@ -113,7 +113,7 @@ App.FS = (function () {
         await writable.close();
       }
     } catch (e) {
-      try { await writable.abort(); } catch (e2) { /* bereits geschlossen */ }
+      try { await writable.abort(); } catch (e2) { /* already closed */ }
       throw e;
     }
     return `${authorFolder}/${name}`;
@@ -122,18 +122,18 @@ App.FS = (function () {
   async function deleteFile(relPath) {
     const { dir, fileName } = await resolveDir(relPath, false);
     await dir.removeEntry(fileName);
-    // Leeren Autorenordner aufräumen (nur oberste Ebene)
+    // clean up an empty author folder (top level only)
     const parts = relPath.split('/').filter(Boolean);
     if (parts.length === 2) {
       let empty = true;
       for await (const _ of dir.keys()) { empty = false; break; } // eslint-disable-line no-unused-vars
       if (empty) {
-        try { await libraryHandle.removeEntry(parts[0]); } catch (e) { /* egal */ }
+        try { await libraryHandle.removeEntry(parts[0]); } catch (e) { /* ignore */ }
       }
     }
   }
 
-  /* Datei in anderen Autorenordner verschieben (Kopie + Löschen) */
+  /* Move a file into a different author folder (copy, then delete) */
   async function moveFile(relPath, newAuthorFolder) {
     const file = await getFile(relPath);
     const parts = relPath.split('/').filter(Boolean);
@@ -144,7 +144,7 @@ App.FS = (function () {
     return newPath;
   }
 
-  /* Bibliothek rekursiv einlesen → [{ path, name, authorFolder, handle }] */
+  /* Scan the library recursively → [{ path, name, authorFolder, handle }] */
   async function scan() {
     const results = [];
     if (!libraryHandle) return results;
@@ -172,7 +172,7 @@ App.FS = (function () {
     return results;
   }
 
-  /* ── Datenverzeichnis (.leselampe/) ── */
+  /* ── Data directory (.lamaepubreader/) ── */
 
   async function readDataFile(name) {
     try {

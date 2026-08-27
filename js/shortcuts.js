@@ -1,4 +1,4 @@
-/* App.Shortcuts – globale Tastaturkürzel (auch aus dem EPUB-iframe weitergeleitet) */
+/* App.Shortcuts – global keyboard shortcuts (also forwarded from the EPUB iframe) */
 window.App = window.App || {};
 
 App.Shortcuts = (function () {
@@ -27,7 +27,7 @@ App.Shortcuts = (function () {
       if (ev.key === 'Escape') ev.target.blur();
       return;
     }
-    if (anyDialogOpen()) return; // Esc schließt <dialog> nativ
+    if (anyDialogOpen()) return; // Esc closes <dialog> natively
 
     // Global
     if (ev.key === '?') { showDialog(); return; }

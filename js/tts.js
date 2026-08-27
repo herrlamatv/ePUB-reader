@@ -1,4 +1,4 @@
-/* App.TTS – Vorlesen über die Web Speech API mit Satz-Chunks und Chrome-Keep-Alive */
+/* App.TTS – read aloud through the Web Speech API, sentence chunks plus a Chrome keep-alive */
 window.App = window.App || {};
 
 App.TTS = (function () {
@@ -24,7 +24,7 @@ App.TTS = (function () {
     return b.format === 'pdf' ? App.PdfReader : App.EpubReader;
   }
 
-  /* ── Stimmen ── */
+  /* ── Voices ── */
 
   function loadVoices() {
     if (!synth) return;
@@ -59,7 +59,7 @@ App.TTS = (function () {
     return voices.find((v) => v.voiceURI === uri) || pickVoice();
   }
 
-  /* ── Text-Chunks (Chrome bricht lange Utterances ab) ── */
+  /* ── Text chunks (Chrome cuts off long utterances) ── */
 
   function chunkText(text) {
     const clean = String(text || '').replace(/\s+/g, ' ').trim();
@@ -91,7 +91,7 @@ App.TTS = (function () {
     });
   }
 
-  /* ── Wiedergabe ── */
+  /* ── Playback ── */
 
   async function start() {
     if (!supported()) {
@@ -134,7 +134,7 @@ App.TTS = (function () {
     };
     u.onerror = (e) => {
       if (e.error === 'interrupted' || e.error === 'canceled') return;
-      console.warn('TTS-Fehler', e.error);
+      console.warn('TTS error', e.error);
       if (playing && !u._cancelled) {
         idx += 1;
         speakCurrent();
@@ -153,7 +153,7 @@ App.TTS = (function () {
     if (!ok) { stop(); return; }
     await buildQueue();
     if (!queue.length) {
-      // Leerer Abschnitt (z. B. Bildseite) → weiter versuchen
+      // empty section (an image page, say) → keep trying
       const again = await reader.ttsAdvance();
       if (again) await buildQueue();
     }
@@ -211,7 +211,7 @@ App.TTS = (function () {
     updateUI();
   }
 
-  /* Chrome stoppt lange Wiedergabe ohne diesen Trick */
+  /* Without this trick Chrome stops long playback */
   function startKeepAlive() {
     stopKeepAlive();
     keepAlive = setInterval(() => {
@@ -226,20 +226,20 @@ App.TTS = (function () {
     if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
   }
 
-  /* ── Hervorhebung des aktuellen Absatzes (EPUB) ── */
+  /* ── Highlight for the current paragraph (EPUB) ── */
 
   function highlight(item) {
     unhighlight();
     if (item.el) {
       item.el.classList.add('leselampe-tts-active');
       activeEl = item.el;
-      try { item.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* egal */ }
+      try { item.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* ignore */ }
     }
   }
 
   function unhighlight() {
     if (activeEl) {
-      try { activeEl.classList.remove('leselampe-tts-active'); } catch (e) { /* egal */ }
+      try { activeEl.classList.remove('leselampe-tts-active'); } catch (e) { /* ignore */ }
       activeEl = null;
     }
   }

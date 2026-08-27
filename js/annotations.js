@@ -1,4 +1,4 @@
-/* App.Annotations – Lesezeichen, Highlights (EPUB: CFI, PDF: Seiten-Rects), Notizen, Export */
+/* App.Annotations – bookmarks, highlights (EPUB: CFI, PDF: page rects), notes, export */
 window.App = window.App || {};
 
 App.Annotations = (function () {
@@ -15,7 +15,7 @@ App.Annotations = (function () {
 
   function book() { return App.state.currentBook; }
 
-  /* ══════════ Auswahl → Popup ══════════ */
+  /* ══════════ Selection → popup ══════════ */
 
   function onEpubSelected(cfiRange, contents) {
     const sel = contents.window.getSelection();
@@ -29,7 +29,7 @@ App.Annotations = (function () {
       const ifr = iframe ? iframe.getBoundingClientRect() : { left: 0, top: 0 };
       x = ifr.left + rect.left + rect.width / 2;
       y = ifr.top + rect.top;
-    } catch (e) { /* Standardposition */ }
+    } catch (e) { /* default position */ }
     pendingSelection = { format: 'epub', cfiRange, text, contents };
     showSelectionPopup(x, y);
   }
@@ -66,7 +66,7 @@ App.Annotations = (function () {
     showSelectionPopup(firstClient.left + firstClient.width / 2, firstClient.top);
   }
 
-  /* Rechtecke derselben Zeile zusammenfassen */
+  /* Merge rects that belong to the same line */
   function mergeRects(rects) {
     const sorted = rects.slice().sort((a, b) => a.y - b.y || a.x - b.x);
     const merged = [];
@@ -128,7 +128,7 @@ App.Annotations = (function () {
     if (pendingSelection.format === 'epub') {
       App.EpubReader.addHighlightToRendition(h);
       appliedEpub.add(h.id);
-      try { pendingSelection.contents.window.getSelection().removeAllRanges(); } catch (e) { /* egal */ }
+      try { pendingSelection.contents.window.getSelection().removeAllRanges(); } catch (e) { /* ignore */ }
     } else {
       refreshPdfPage(h.page);
       window.getSelection().removeAllRanges();
@@ -161,7 +161,7 @@ App.Annotations = (function () {
     if (el) renderPdfPageHighlights(el, pageNum, App.PdfReader.getScale());
   }
 
-  /* Beim Öffnen eines EPUBs alle gespeicherten Highlights anwenden */
+  /* Apply every stored highlight when an EPUB opens */
   function applyEpubHighlights() {
     const b = book();
     if (!b || b.format !== 'epub') return;
@@ -175,7 +175,7 @@ App.Annotations = (function () {
 
   function resetEpubApplied() { appliedEpub = new Set(); }
 
-  /* PDF: Highlight-Ebene einer Seite neu zeichnen (von PdfReader nach jedem Render aufgerufen) */
+  /* PDF: redraw a page's highlight layer (called by PdfReader after every render) */
   function renderPdfPageHighlights(pageEl, pageNum, scale) {
     const b = book();
     const layer = pageEl.querySelector('.hl-layer');
@@ -213,11 +213,11 @@ App.Annotations = (function () {
           rect = { left: ifr.left + rect.left, top: ifr.top + rect.top, width: rect.width, height: rect.height };
         }
       }
-    } catch (e) { /* Standardposition */ }
+    } catch (e) { /* default position */ }
     openNotePopover(id, rect);
   }
 
-  /* ══════════ Notiz-Popover ══════════ */
+  /* ══════════ Note popover ══════════ */
 
   function openNotePopover(id, anchorRect) {
     const b = book();
@@ -281,7 +281,7 @@ App.Annotations = (function () {
     renderLists();
   }
 
-  /* ══════════ Lesezeichen ══════════ */
+  /* ══════════ Bookmarks ══════════ */
 
   function currentPosition() {
     const b = book();
@@ -343,7 +343,7 @@ App.Annotations = (function () {
     App.Utils.setIcon(btn.querySelector('.icon'), active ? 'bookmarkFilled' : 'bookmark');
   }
 
-  /* ══════════ Listen im Drawer ══════════ */
+  /* ══════════ Lists in the drawer ══════════ */
 
   function jumpTo(item) {
     const b = book();
@@ -364,7 +364,7 @@ App.Annotations = (function () {
     const esc = App.Utils.escapeHtml;
     const t = App.I18n.t;
 
-    // Lesezeichen
+    // bookmarks
     bmList.innerHTML = '';
     if (!b.bookmarks.length) {
       bmList.innerHTML = `<p class="empty-hint">${esc(t('annotations.noneBookmarks'))}</p>`;
@@ -393,7 +393,7 @@ App.Annotations = (function () {
       });
     }
 
-    // Markierungen
+    // highlights
     hlList.innerHTML = '';
     if (!b.highlights.length) {
       hlList.innerHTML = `<p class="empty-hint">${esc(t('annotations.noneHighlights'))}</p>`;
@@ -463,7 +463,7 @@ App.Annotations = (function () {
   }
 
   function init() {
-    // Auswahl-Popup
+    // selection popup
     $('selection-popup').querySelectorAll('.hl-dot').forEach((dot) => {
       dot.addEventListener('click', () => {
         const h = addHighlight(dot.dataset.color);
@@ -481,7 +481,7 @@ App.Annotations = (function () {
       if (pendingSelection) {
         navigator.clipboard.writeText(pendingSelection.text).then(() => {
           App.Utils.toast(App.I18n.t('annotations.copied'));
-        }).catch(() => { /* egal */ });
+        }).catch(() => { /* ignore */ });
       }
       $('selection-popup').hidden = true;
     });
@@ -490,7 +490,7 @@ App.Annotations = (function () {
       App.TTS.start();
     });
 
-    // Notiz-Popover
+    // note popover
     $('note-close').addEventListener('click', saveNoteAndClose);
     $('note-delete').addEventListener('click', () => {
       const id = editingHighlightId;
