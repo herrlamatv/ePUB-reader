@@ -8,7 +8,10 @@ Your library is a normal folder on disk and imported books are filed under the a
 ```bash
 npm start
 ```
+## Easy install + start:
+For easy installation, download the repo [here](https://github.com/herrlamatv/ePUB-reader/archive/refs/heads/master.zip).<br> After the download, you can extract the ZIP and start the<br>[**executables\install.bat**](https://github.com/herrlamatv/ePUB-reader/blob/master/.executables/install.bat). Then the [**start.bat**](https://github.com/herrlamatv/ePUB-reader/blob/master/.executables/start.bat)<br>Note: it will ask for admin perms to install **nodejs**
 
+****
 Open http://localhost:8420 in Chrome or Edge. On first run you pick a language and a library
 folder. After a browser restart, click "Grant access" so the app can read the folder again.
 
