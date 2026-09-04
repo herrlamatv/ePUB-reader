@@ -133,6 +133,29 @@ App.Library = (function () {
 
     App.Store.save();
     if (newCount > 0) App.Utils.toast(App.I18n.t('library.newBooksFound', { n: newCount }));
+    backfillCovers(); // runs in the background and refreshes the grid when done
+  }
+
+  /* Covers are only cached in IndexedDB – re-extract the ones that are gone
+     (cleared site data, a new browser profile, a book imported elsewhere). */
+  async function backfillCovers() {
+    if (!App.FS.hasLibrary()) return;
+    let restored = 0;
+    for (const rec of App.Store.books()) {
+      if (rec.missing || !rec.path) continue;
+      try {
+        if (await App.DB.get('covers', rec.id)) continue;
+        const file = await App.FS.getFile(rec.path);
+        const meta = await App.Meta.read(file, rec.format);
+        if (!meta.cover) continue;
+        await App.DB.set('covers', rec.id, meta.cover);
+        coverUrls.delete(rec.id);
+        restored += 1;
+      } catch (e) {
+        console.warn('Cover could not be regenerated', rec.path, e);
+      }
+    }
+    if (restored > 0) render();
   }
 
   function newRecord({ path, authorFolder, format, fp, meta, size }) {

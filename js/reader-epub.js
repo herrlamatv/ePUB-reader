@@ -21,6 +21,14 @@ App.EpubReader = (function () {
   let currentFlow = null;
   let displayedFirst = false;
 
+  /* Mouse wheel paging (paginated flow only) */
+  const WHEEL_STEP = 40;        // accumulated pixels needed for one page turn
+  const WHEEL_COOLDOWN = 320;   // ms between two turns
+  const WHEEL_GESTURE_GAP = 400; // ms of quiet that starts a fresh gesture
+  let wheelAccum = 0;
+  let wheelLastEvent = 0;
+  let wheelLastTurn = 0;
+
   async function open(rec, file) {
     record = rec;
     $('epub-container').hidden = false;
@@ -64,6 +72,8 @@ App.EpubReader = (function () {
       const style = contents.document.createElement('style');
       style.textContent = '.leselampe-tts-active { background: rgba(59,130,246,0.18); border-radius: 3px; }';
       contents.document.head.appendChild(style);
+      // the section lives in an iframe, so it needs its own wheel listener
+      contents.document.addEventListener('wheel', onWheel, { passive: false });
     });
 
     rendition.on('relocated', onRelocated);
@@ -137,10 +147,22 @@ App.EpubReader = (function () {
 
     $('progress-slider').value = Math.round(pct * 1000);
     $('progress-label').textContent = `${Math.round(pct * 100)} %`;
+    updatePageIndicator(pct);
     $('chapter-label').textContent = chapterLabelFor(location.start.href) || '';
     markActiveTocItem(location.start.href);
     App.Annotations.updateBookmarkButton();
     App.Stats.recordActivity();
+  }
+
+  /* EPUB has no real pages – derive one from the estimated page count */
+  function updatePageIndicator(pct) {
+    const total = record && record.pageCount ? record.pageCount : 0;
+    if (!total) {
+      App.setPageIndicator(null, null);
+      return;
+    }
+    const page = App.Utils.clamp(Math.round(pct * (total - 1)) + 1, 1, total);
+    App.setPageIndicator(page, total);
   }
 
   async function setupLocations() {
@@ -233,6 +255,32 @@ App.EpubReader = (function () {
   }
 
   /* ── Interaction ── */
+
+  function wheelDistance(ev) {
+    const d = ev.deltaY || ev.deltaX || 0;
+    if (ev.deltaMode === 1) return d * 16;   // lines → px
+    if (ev.deltaMode === 2) return d * 400;  // pages → px
+    return d;
+  }
+
+  function onWheel(ev) {
+    if (!rendition || currentFlow === 'scrolled') return; // scrolled flow scrolls natively
+    if (ev.ctrlKey || ev.metaKey) return;                 // leave zoom gestures alone
+    if (ev.cancelable) ev.preventDefault();
+
+    const now = Date.now();
+    if (now - wheelLastEvent > WHEEL_GESTURE_GAP) wheelAccum = 0;
+    wheelLastEvent = now;
+    wheelAccum += wheelDistance(ev);
+
+    if (Math.abs(wheelAccum) < WHEEL_STEP) return;
+    if (now - wheelLastTurn < WHEEL_COOLDOWN) return;     // keep accumulating until the cooldown is over
+    wheelLastTurn = now;
+    const forward = wheelAccum > 0;
+    wheelAccum = 0;
+    if (forward) next(); else prev();
+    App.showChrome();
+  }
 
   function onContentClick() {
     const contents = rendition.getContents()[0];
@@ -340,11 +388,14 @@ App.EpubReader = (function () {
     $('epub-viewport').innerHTML = '';
     $('epub-container').hidden = true;
     $('epub-controls').hidden = true;
+    App.setPageIndicator(null, null);
   }
 
   function init() {
     App.Utils.on('epub:settings-changed', onSettingsChanged);
     App.Utils.on('theme:changed', (theme) => applyTheme(theme));
+    // wheel events over the margins / tap zones never reach the iframe
+    $('epub-container').addEventListener('wheel', onWheel, { passive: false });
   }
 
   return {

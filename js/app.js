@@ -23,6 +23,7 @@ App.state = {
     $('view-library').hidden = true;
     $('view-reader').hidden = false;
     $('reader-title').textContent = rec.title;
+    App.setPageIndicator(null, null);
     rec.lastOpenedAt = Date.now();
     App.Store.save();
     showChrome();
@@ -57,6 +58,7 @@ App.state = {
       if (rec.format === 'epub') App.EpubReader.close();
       else App.PdfReader.close();
     }
+    App.setPageIndicator(null, null);
     App.state.currentBook = null;
     App.state.view = 'library';
     $('view-reader').hidden = true;
@@ -64,6 +66,21 @@ App.state = {
     clearTimeout(chromeTimer);
     App.Store.saveNow();
     App.Library.render();
+  };
+
+  /* ══════════ Page counter in the top bar ══════════ */
+
+  /* Both readers report their position here; page/total null hides the badge. */
+  App.setPageIndicator = function (page, total) {
+    const el = $('page-indicator');
+    if (!el) return;
+    if (!page || !total) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.textContent = `${page} / ${total}`;
+    el.hidden = false;
   };
 
   /* ══════════ Drawer ══════════ */

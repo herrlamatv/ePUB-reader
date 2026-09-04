@@ -268,7 +268,12 @@ input[type="range"]::-webkit-slider-thumb {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   padding: 0 8px;
 }
-.topbar-actions { display: flex; gap: 2px; }
+.topbar-actions { display: flex; align-items: center; gap: 2px; }
+#page-indicator {
+  padding: 3px 9px; margin-right: 6px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface);
+}
 
 #reader-content { flex: 1; position: relative; min-height: 0; background: var(--reader-bg); }
 

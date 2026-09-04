@@ -246,6 +246,7 @@ App.PdfReader = (function () {
   function updatePageUI() {
     $('pdf-page-input').value = currentPage;
     $('pdf-progress-slider').value = currentPage;
+    App.setPageIndicator(currentPage, numPages);
     updateZoomLabel();
   }
 
@@ -379,6 +380,7 @@ App.PdfReader = (function () {
     }
     window.removeEventListener('resize', onResize);
     $('pdf-controls').hidden = true;
+    App.setPageIndicator(null, null);
     try { if (pdf) pdf.destroy(); } catch (e) { /* ignore */ }
     pdf = null;
     record = null;
