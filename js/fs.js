@@ -154,7 +154,7 @@ App.FS = (function () {
         if (name.startsWith('.')) continue;
         if (handle.kind === 'file') {
           const lower = name.toLowerCase();
-          if (lower.endsWith('.epub') || lower.endsWith('.pdf')) {
+          if (/\.(epub|pdf|cbz)$/.test(lower)) {
             results.push({
               path: [...pathParts, name].join('/'),
               name,

@@ -18,10 +18,10 @@ App.TTS = (function () {
 
   function supported() { return !!synth; }
 
+  /* only readers with text can read aloud (not CBZ) */
   function activeReader() {
-    const b = App.state.currentBook;
-    if (!b) return null;
-    return b.format === 'pdf' ? App.PdfReader : App.EpubReader;
+    const reader = App.activeReader();
+    return reader && reader.getTtsBlocks ? reader : null;
   }
 
   /* ── Voices ── */

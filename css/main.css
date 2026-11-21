@@ -287,7 +287,7 @@ input[type="range"]::-webkit-slider-thumb {
 .tap-zone:hover { color: var(--fg-muted); }
 .tap-zone .icon { width: 28px; height: 28px; }
 
-#pdf-viewport {
+#pdf-viewport, #cbz-viewport {
   position: absolute; inset: 0; overflow: auto;
   padding: 56px 0 64px;
   text-align: center;
@@ -305,6 +305,16 @@ input[type="range"]::-webkit-slider-thumb {
   mix-blend-mode: multiply; border-radius: 2px;
 }
 [data-theme="dark"] .hl-layer .hl { mix-blend-mode: screen; }
+
+/* CBZ: a gapless strip (webtoons), or one page per screen in fit-page mode */
+.cbz-frame { margin: 0 auto; background: var(--surface); }
+.cbz-frame img { display: block; width: 100%; height: 100%; user-select: none; }
+#cbz-viewport.paged { padding: 0; scroll-snap-type: y mandatory; }
+#cbz-viewport.paged .cbz-page {
+  height: 100%; scroll-snap-align: start;
+  display: flex; align-items: center; justify-content: center;
+}
+#cbz-viewport.paged .cbz-frame { flex: none; margin: 0; box-shadow: var(--shadow-sm); }
 
 #epub-controls, #pdf-controls { display: flex; align-items: center; gap: 14px; width: 100%; }
 #epub-controls input[type="range"], #pdf-controls input[type="range"] { flex: 1; }

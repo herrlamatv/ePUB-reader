@@ -296,7 +296,7 @@ App.Annotations = (function () {
           App.I18n.t('annotations.position', { p: Math.round(App.EpubReader.currentPercentage() * 100) })
       };
     }
-    const page = App.PdfReader.currentPageNum();
+    const page = App.activeReader().currentPageNum();
     return {
       page,
       percentage: b.progress.percentage || 0,
@@ -351,7 +351,7 @@ App.Annotations = (function () {
     if (b.format === 'epub' && (item.cfi || item.cfiRange)) {
       App.EpubReader.display(item.cfiRange || item.cfi);
     } else if (item.page) {
-      App.PdfReader.goToPage(item.page);
+      App.activeReader().goToPage(item.page);
     }
     App.closeDrawers();
   }

@@ -12,10 +12,25 @@ App.state = {
   const $ = (id) => document.getElementById(id);
   const DRAWERS = ['drawer-toc', 'drawer-annotations', 'drawer-search', 'drawer-tts', 'drawer-settings'];
 
+  const READERS = { epub: 'EpubReader', pdf: 'PdfReader', cbz: 'CbzReader' };
+
   let chromeTimer = null;
   let dragCounter = 0;
 
   /* ══════════ Open / close the reader ══════════ */
+
+  App.readerFor = function (format) {
+    return App[READERS[format]] || null;
+  };
+
+  App.activeReader = function () {
+    return App.state.currentBook ? App.readerFor(App.state.currentBook.format) : null;
+  };
+
+  /* Comics are images only – nothing to search or read aloud */
+  App.hasText = function () {
+    return !!App.state.currentBook && App.state.currentBook.format !== 'cbz';
+  };
 
   App.openReader = async function (rec, file) {
     App.state.view = 'reader';
@@ -23,17 +38,15 @@ App.state = {
     $('view-library').hidden = true;
     $('view-reader').hidden = false;
     $('reader-title').textContent = rec.title;
+    $('btn-search').hidden = !App.hasText();
+    $('btn-tts').hidden = !App.hasText();
     App.setPageIndicator(null, null);
     rec.lastOpenedAt = Date.now();
     App.Store.save();
     showChrome();
 
     try {
-      if (rec.format === 'epub') {
-        await App.EpubReader.open(rec, file);
-      } else {
-        await App.PdfReader.open(rec, file);
-      }
+      await App.readerFor(rec.format).open(rec, file);
     } catch (e) {
       console.error('Failed to open book', e);
       App.Utils.toast(App.I18n.t('reader.openError', { error: e.message || e }), 'error');
@@ -53,11 +66,8 @@ App.state = {
     App.Stats.endSession();
     App.closeDrawers();
     App.Annotations.hidePopups();
-    const rec = App.state.currentBook;
-    if (rec) {
-      if (rec.format === 'epub') App.EpubReader.close();
-      else App.PdfReader.close();
-    }
+    const reader = App.activeReader();
+    if (reader) reader.close();
     App.setPageIndicator(null, null);
     App.state.currentBook = null;
     App.state.view = 'library';
@@ -209,16 +219,16 @@ App.state = {
     $('tap-left').addEventListener('click', () => App.EpubReader.prev());
     $('tap-right').addEventListener('click', () => App.EpubReader.next());
 
-    // PDF controls
+    // page controls (shared by the PDF and CBZ readers)
     $('pdf-page-input').addEventListener('change', (ev) => {
-      App.PdfReader.goToPage(Number(ev.target.value));
+      App.activeReader().goToPage(Number(ev.target.value));
     });
     $('pdf-progress-slider').addEventListener('input', (ev) => {
-      App.PdfReader.goToPage(Number(ev.target.value), true);
+      App.activeReader().goToPage(Number(ev.target.value), true);
     });
-    $('btn-zoom-in').addEventListener('click', () => App.PdfReader.zoomIn());
-    $('btn-zoom-out').addEventListener('click', () => App.PdfReader.zoomOut());
-    $('btn-zoom-mode').addEventListener('click', () => App.PdfReader.cycleZoomMode());
+    $('btn-zoom-in').addEventListener('click', () => App.activeReader().zoomIn());
+    $('btn-zoom-out').addEventListener('click', () => App.activeReader().zoomOut());
+    $('btn-zoom-mode').addEventListener('click', () => App.activeReader().cycleZoomMode());
 
     // chrome auto-hide
     $('view-reader').addEventListener('pointermove', () => {
@@ -248,6 +258,7 @@ App.state = {
     App.Shortcuts.init();
     App.EpubReader.init();
     App.PdfReader.init();
+    App.CbzReader.init();
     bindUI();
 
     if (window.pdfjsLib) {

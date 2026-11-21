@@ -8,13 +8,8 @@ App.Shortcuts = (function () {
 
   function inReader() { return App.state.view === 'reader'; }
 
-  function isPdf() {
-    return App.state.currentBook && App.state.currentBook.format === 'pdf';
-  }
-
-  function activeReader() {
-    if (!App.state.currentBook) return null;
-    return isPdf() ? App.PdfReader : App.EpubReader;
+  function isEpub() {
+    return App.state.currentBook && App.state.currentBook.format === 'epub';
   }
 
   function anyDialogOpen() {
@@ -34,7 +29,7 @@ App.Shortcuts = (function () {
     if (ev.key === 'd' && !ev.ctrlKey && !ev.metaKey) { App.Settings.cycleTheme(); return; }
 
     if (ev.ctrlKey && (ev.key === 'f' || ev.key === 'F')) {
-      if (inReader()) {
+      if (inReader() && App.hasText()) {
         ev.preventDefault();
         App.openDrawer('drawer-search');
       }
@@ -42,7 +37,7 @@ App.Shortcuts = (function () {
     }
 
     if (!inReader()) return;
-    const reader = activeReader();
+    const reader = App.activeReader();
     if (!reader) return;
 
     switch (ev.key) {
@@ -58,13 +53,13 @@ App.Shortcuts = (function () {
         break;
       case '+':
       case '=':
-        if (isPdf()) App.PdfReader.zoomIn(); else App.Settings.adjustFontSize(10);
+        if (isEpub()) App.Settings.adjustFontSize(10); else reader.zoomIn();
         break;
       case '-':
-        if (isPdf()) App.PdfReader.zoomOut(); else App.Settings.adjustFontSize(-10);
+        if (isEpub()) App.Settings.adjustFontSize(-10); else reader.zoomOut();
         break;
       case '0':
-        if (isPdf()) App.PdfReader.resetZoom();
+        if (!isEpub()) reader.resetZoom();
         break;
       case 't':
         App.toggleDrawer('drawer-toc');
@@ -76,10 +71,10 @@ App.Shortcuts = (function () {
         App.toggleDrawer('drawer-annotations');
         break;
       case 's':
-        App.toggleDrawer('drawer-search');
+        if (App.hasText()) App.toggleDrawer('drawer-search');
         break;
       case 'p':
-        App.TTS.playPause();
+        if (App.hasText()) App.TTS.playPause();
         break;
       case 'Home':
         reader.goToStart();

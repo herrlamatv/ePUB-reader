@@ -1,6 +1,6 @@
 # ePUB-reader
 
-A browser-based EPUB and PDF reader. Plain HTML, CSS and JS, no build step, no backend.
+A browser-based EPUB, PDF and CBZ (comic) reader. Plain HTML, CSS and JS, no build step, no backend.
 Your library is a normal folder on disk and imported books are filed under the author's name.
 
 ## Running it
@@ -25,6 +25,8 @@ Library/
 │   └── Der Zauberberg.epub
 ├── Anna Autorin/
 │   └── Example.pdf
+├── Some Writer/
+│   └── Comic #1.cbz
 └── .lamaepubreader/
     ├── data.json          progress, bookmarks, highlights, stats, settings
     └── data.backup.json   daily backup
@@ -36,6 +38,9 @@ thumbnails are cached in IndexedDB and regenerated when missing.
 ## Features
 
 - EPUB and PDF, rendered locally by epub.js and pdf.js
+- CBZ comics: pages in natural file order, one page per screen or a gapless strip for
+  webtoons (remembered per book). Title, author, cover and chapters come from
+  `ComicInfo.xml`, otherwise chapters follow the folders inside the archive
 - Import via button or drag and drop; author and title come from the metadata, falling back
   to an `Author - Title.epub` filename
 - Grid and list view, sorting, search across the library
@@ -60,7 +65,7 @@ Opened as `file://`, the PDF worker runs on the main thread, which is slower.
 | Key | Action |
 |---|---|
 | `←` `→` `Space` | Turn page |
-| `+` `−` `0` | Zoom (PDF) / font size (EPUB) |
+| `+` `−` `0` | Zoom (PDF, CBZ) / font size (EPUB) |
 | `T` | Table of contents |
 | `B` | Toggle bookmark |
 | `M` | Annotations |
@@ -82,6 +87,6 @@ index.html   library, reader, drawers, dialogs
 css/         main, themes, pdf_viewer
 vendor/      jszip, epub.js, pdf.js
 js/          utils, i18n, db, fs, store, metadata, library, reader-epub,
-             reader-pdf, annotations, search, tts, stats, settings,
-             shortcuts, app
+             reader-pdf, reader-cbz, annotations, search, tts, stats,
+             settings, shortcuts, app
 ```

@@ -62,6 +62,7 @@ App.I18N = {
     'reader.fitWidth': 'Breite',
     'reader.fitPage': 'Seite',
     'reader.noToc': 'Kein Inhaltsverzeichnis vorhanden.',
+    'reader.noImages': 'Im Archiv wurden keine Bilder gefunden.',
 
     'annotations.bookmarks': 'Lesezeichen',
     'annotations.highlights': 'Markierungen',
@@ -129,7 +130,7 @@ App.I18N = {
 
     'shortcuts.title': 'Tastaturkürzel',
     'shortcuts.turnPage': 'Blättern',
-    'shortcuts.zoomFont': 'Zoom (PDF) / Schriftgröße (EPUB)',
+    'shortcuts.zoomFont': 'Zoom (PDF, CBZ) / Schriftgröße (EPUB)',
     'shortcuts.toc': 'Inhaltsverzeichnis',
     'shortcuts.bookmark': 'Lesezeichen setzen',
     'shortcuts.annotations': 'Anmerkungen öffnen',
@@ -160,7 +161,7 @@ App.I18N = {
     'app.dataRestored': 'Daten aus Sicherung wiederhergestellt.',
     'app.dataCorrupt': 'Die Bibliotheksdaten sind beschädigt. Aus Sicherung wiederherstellen?',
     'app.name': 'Leselampe',
-    'app.title': 'Leselampe – EPUB- & PDF-Reader',
+    'app.title': 'Leselampe – EPUB-, PDF- & CBZ-Reader',
 
     'welcome.title': 'Sprache wählen',
     'welcome.subtitle': 'In welcher Sprache möchtest du Leselampe nutzen? Du kannst die Sprache später jederzeit in den Einstellungen ändern.',
@@ -227,6 +228,7 @@ App.I18N = {
     'reader.fitWidth': 'Width',
     'reader.fitPage': 'Page',
     'reader.noToc': 'No table of contents available.',
+    'reader.noImages': 'No images found in the archive.',
 
     'annotations.bookmarks': 'Bookmarks',
     'annotations.highlights': 'Highlights',
@@ -294,7 +296,7 @@ App.I18N = {
 
     'shortcuts.title': 'Keyboard shortcuts',
     'shortcuts.turnPage': 'Turn page',
-    'shortcuts.zoomFont': 'Zoom (PDF) / font size (EPUB)',
+    'shortcuts.zoomFont': 'Zoom (PDF, CBZ) / font size (EPUB)',
     'shortcuts.toc': 'Table of contents',
     'shortcuts.bookmark': 'Toggle bookmark',
     'shortcuts.annotations': 'Open annotations',

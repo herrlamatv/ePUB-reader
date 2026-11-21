@@ -183,7 +183,7 @@ App.Library = (function () {
   /* ── Import, filed by author ── */
 
   async function importFiles(fileList) {
-    const files = [...fileList].filter((f) => /\.(epub|pdf)$/i.test(f.name));
+    const files = [...fileList].filter((f) => /\.(epub|pdf|cbz)$/i.test(f.name));
     if (!files.length) return;
 
     // fallback mode: just open the file, do not copy it
@@ -215,8 +215,8 @@ App.Library = (function () {
         const meta = await App.Meta.read(file, format);
         const authorDisplay = meta.author || App.I18n.t('library.unknownAuthor');
         const authorFolder = App.Utils.sanitizeName(authorDisplay) || 'Unknown Author';
-        const baseName = App.Utils.sanitizeName(meta.title) || App.Utils.sanitizeName(file.name.replace(/\.(epub|pdf)$/i, '')) || 'Buch';
-        const ext = format === 'epub' ? '.epub' : '.pdf';
+        const baseName = App.Utils.sanitizeName(meta.title) || App.Utils.sanitizeName(file.name.replace(/\.(epub|pdf|cbz)$/i, '')) || 'Buch';
+        const ext = `.${format}`;
         const path = await App.FS.writeBookFile(authorFolder, baseName, ext, file);
         const rec = newRecord({ path, authorFolder, format, fp, meta, size: file.size });
         App.Store.addBook(rec);
